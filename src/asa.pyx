@@ -28,7 +28,7 @@ cdef extern from "asa_usr_asa.h":
     ctypedef int BOOL
     ctypedef int ALLOC_INT
     ctypedef long LONG_INT
-    cdef struct USER_DEFINES:
+    cdef struct _USER_DEFINES:
         LONG_INT Limit_Acceptances
         LONG_INT Limit_Generated
         int Limit_Invalid_Generated_States
@@ -93,8 +93,8 @@ cdef extern from "asa_usr_asa.h":
         #LONG_INT *Asa_Data_Int
         #endif
         #if OPTIONAL_DATA_PTR
-        #ALLOC_INT Asa_Data_Dim_Ptr
-        #OPTIONAL_PTR_TYPE *Asa_Data_Ptr
+        ALLOC_INT Asa_Data_Dim_Ptr
+        (void *) Asa_Data_Ptr
         #endif
         #if USER_ASA_OUT
         #char *Asa_Out_File
@@ -207,6 +207,10 @@ cdef extern from "asa_usr_asa.h":
         #double Performance_Target
         #double Factor_a
         #endif
+    ctypedef _USER_DEFINES USER_DEFINES
+
+cdef extern from "asa_usr.h":
+    double randflt (LONG_INT * rand_seed)
 
 cdef extern from "asa.h":
     double asa (double (*user_cost_function)
@@ -220,3 +224,26 @@ cdef extern from "asa.h":
          USER_DEFINES * OPTIONS)
 
 
+def asamin(func, x0):
+    cdef USER_DEFINES OPTIONS
+    cdef LONG_INT rand_seed
+    cdef int exit_status, valid_state_gen_flag, param_type
+    cdef ALLOC_INT num_param
+    cdef double param_init_fin, param_min, param_max, tang, curve
+    OPTIONS.Asa_Data_Ptr = <void*>func
+    return asa(cost_function, randflt, &rand_seed,
+            &param_init_fin, &param_min, &param_max, &tang, &curve,
+            &num_param, &param_type,
+            &valid_state_gen_flag, &exit_status, &OPTIONS)
+
+
+cdef double cost_function (double *x,
+               double *parameter_lower_bound,
+               double *parameter_upper_bound,
+               double *cost_tangents,
+               double *cost_curvature,
+               ALLOC_INT * parameter_dimension,
+               int *parameter_int_real,
+               int *cost_flag, int *exit_code,
+               USER_DEFINES * USER_OPTIONS):
+    return (<object>USER_OPTIONS.Asa_Data_Ptr)()
