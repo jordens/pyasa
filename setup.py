@@ -38,7 +38,7 @@ setup(
     url="http://launchpad.net/pyasa",
     license="hybrid BSD",
     install_requires=["numpy"],
-    #packages=["flycapture2"],
+    #packages=["asa"],
     cmdclass = {'build_ext': build_ext},
     ext_modules = [Extension("asa",
         define_macros = [('OPTIONAL_DATA_PTR', '1'),
@@ -47,7 +47,6 @@ setup(
                          ('ASA_LIB', '1')],
         extra_compile_args=["-g"],
         sources = ["src/asa.pyx", "ASA/asa.c", "src/asa_rand.c"],
-        #, "ASA/asa_usr.c"],
         include_dirs = ["ASA", numpy.get_include(),],
         ),]
 )

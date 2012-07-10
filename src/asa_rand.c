@@ -1,4 +1,5 @@
-#include "asa_usr.h"
+#include "asa_usr_asa.h"
+#include "asa_rand.h"
 
 #if ASA_LIB
 static LONG_INT *asa_rand_seed;

@@ -209,7 +209,7 @@ cdef extern from "asa_usr_asa.h":
         #endif
     ctypedef _USER_DEFINES USER_DEFINES
 
-cdef extern from "asa_usr.h":
+cdef extern from "asa_rand.h":
     double randflt (LONG_INT * rand_seed)
 
 cdef extern from "asa.h":
