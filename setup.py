@@ -43,7 +43,6 @@ setup(
     ext_modules = [Extension("asa",
         define_macros = [('OPTIONAL_DATA_PTR', '1'),
                          ('USER_TYPE', 'void *'),
-                         ('ASA_TEMPLATE', '0'),
                          ('ASA_LIB', '1')],
         extra_compile_args=["-g"],
         sources = ["src/asa.pyx", "ASA/asa.c", "src/asa_rand.c"],

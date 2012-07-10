@@ -1,3 +1,3 @@
-from asa import asamin
+from asa import asa
 
-print asamin(lambda x: 1., (1.,))
+print asa(lambda x: 1., (1.,))

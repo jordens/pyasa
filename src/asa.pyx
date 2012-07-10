@@ -40,20 +40,11 @@ cdef extern from "asa_usr_asa.h":
         double Temperature_Ratio_Scale
         double Cost_Parameter_Scale_Ratio
         double Temperature_Anneal_Scale
-        #if USER_INITIAL_COST_TEMP
-        #double *User_Cost_Temperature
-        ##endif
 
         int Include_Integer_Parameters
         int User_Initial_Parameters
         ALLOC_INT Sequential_Parameters
         double Initial_Parameter_Temperature
-        #if RATIO_TEMPERATURE_SCALES
-        #double *User_Temperature_Ratio
-        #endif
-        #if USER_INITIAL_PARAMETERS_TEMPS
-        #double *User_Parameter_Temperature
-        #endif
 
         int Acceptance_Frequency_Modulus
         int Generated_Frequency_Modulus
@@ -61,9 +52,6 @@ cdef extern from "asa_usr_asa.h":
         int Reanneal_Parameters
 
         double Delta_X
-        #if DELTA_PARAMETERS
-        #double *User_Delta_Parameter
-        #endif
         int User_Tangents
         int Curvature_0
 
@@ -84,136 +72,22 @@ cdef extern from "asa_usr_asa.h":
         double *Last_Cost
         double *Last_Parameters
 
-        #if OPTIONAL_DATA_DBL
-        #ALLOC_INT Asa_Data_Dim_Dbl
-        #double *Asa_Data_Dbl
-        #endif
-        #if OPTIONAL_DATA_INT
-        #ALLOC_INT Asa_Data_Dim_Int
-        #LONG_INT *Asa_Data_Int
-        #endif
-        #if OPTIONAL_DATA_PTR
         ALLOC_INT Asa_Data_Dim_Ptr
-        (void *) Asa_Data_Ptr
-        #endif
+        void * Asa_Data_Ptr
         #if USER_ASA_OUT
         #char *Asa_Out_File
         #endif
-        #if USER_COST_SCHEDULE
-        #if HAVE_ANSI
-        #double (*Cost_Schedule) (double current_cost_temperature,
-        #                         const void *OPTIONS_TMP)
-        #else                           /* HAVE_ANSI */
-        #double (*Cost_Schedule) ()
-        #endif                          /* HAVE_ANSI */
-        #endif
-        #if USER_ACCEPT_ASYMP_EXP
-        #double Asymp_Exp_Param
-        #endif
-        #if USER_ACCEPTANCE_TEST
-        #if HAVE_ANSI
-        #void (*Acceptance_Test) (double cost,
-        #                         double *parameter_minimum,
-        #                         double *parameter_maximum,
-        #                         ALLOC_INT * number_parameters,
-        #                         const void *OPTIONS_TMP)
-        #else                           /* HAVE_ANSI */
-        #void (*Acceptance_Test) ()
-        ##endif                          /* HAVE_ANSI */
-        #int User_Acceptance_Flag
-        #int Cost_Acceptance_Flag
-        #double Cost_Temp_Curr
-        #double Cost_Temp_Init
-        #double Cost_Temp_Scale
-        #double Prob_Bias
-        #LONG_INT *Random_Seed
-        #endif
-        #if USER_GENERATING_FUNCTION
-        #if HAVE_ANSI
-        #double (*Generating_Distrib) (LONG_INT * seed,
-        #                              ALLOC_INT * parameter_dimension,
-        #                              ALLOC_INT index_v,
-        #                              double temperature_v,
-        #                              double init_param_temp_v,
-        #                              double temp_scale_params_v,
-        #                              double parameter_v,
-        #                              double parameter_range_v,
-        #                              double *last_saved_parameter,
-        #                              const void *OPTIONS_TMP)
-        #else                           /* HAVE_ANSI */
-        #double (*Generating_Distrib) ()
-        #endif                          /* HAVE_ANSI */
-        #endif
-        #if USER_REANNEAL_COST
-        #if HAVE_ANSI
-        #int (*Reanneal_Cost_Function) (double *cost_best,
-        #                               double *cost_last,
-        #                               double *initial_cost_temperature,
-        #                               double *current_cost_temperature,
-        #                               const void *OPTIONS_TMP)
-        #else                           /* HAVE_ANSI */
-        #int (*Reanneal_Cost_Function) ()
-        #endif                          /* HAVE_ANSI */
-        #endif
-        #if USER_REANNEAL_PARAMETERS
-        #if HAVE_ANSI
-        #double (*Reanneal_Params_Function) (double current_temp,
-        #                                    double tangent,
-        #                                    double max_tangent,
-        #                                    const void *OPTIONS_TMP)
-        #else                           /* HAVE_ANSI */
-        #double (*Reanneal_Params_Function) ()
-        #endif                          /* HAVE_ANSI */
-        #endif
-        #if ASA_SAMPLE
-        #double Bias_Acceptance
-        #double *Bias_Generated
-        #double Average_Weights
-        #double Limit_Weights
-        #endif
-        #if ASA_QUEUE
-        #ALLOC_INT Queue_Size
-        #double *Queue_Resolution
-        #endif
-        #if ASA_RESOLUTION
-        #double *Coarse_Resolution
-        #endif
-        #if FITLOC
-        #int Fit_Local
-        #int Iter_Max
-        #double Penalty
-        #endif
-        #if MULTI_MIN
-        #int Multi_Number
-        #double *Multi_Cost
-        #double **Multi_Params
-        #double *Multi_Grid
-        #int Multi_Specify
-        #endif
-        #if ASA_PARALLEL
-        #int Gener_Mov_Avr
-        #LONG_INT Gener_Block
-        #LONG_INT Gener_Block_Max
-        #endif
-        #if ASA_SAVE
-        #ALLOC_INT Random_Array_Dim
-        #double *Random_Array
-        #endif
         int Asa_Recursive_Level
-        #if ASA_FUZZY
-        #int NoOfSamples
-        #double ThresholdDeviation
-        #double Threshold1
-        #double Performance_Target
-        #double Factor_a
-        #endif
+
     ctypedef _USER_DEFINES USER_DEFINES
+
 
 cdef extern from "asa_rand.h":
     double randflt (LONG_INT * rand_seed)
 
+
 cdef extern from "asa.h":
-    double asa (double (*user_cost_function)
+    double c_asa "asa" (double (*user_cost_function)
          (double *, double *, double *, double *, double *, ALLOC_INT *,
           int *, int *, int *, USER_DEFINES *),
          double (*user_random_generator) (LONG_INT *), LONG_INT * rand_seed,
@@ -224,15 +98,16 @@ cdef extern from "asa.h":
          USER_DEFINES * OPTIONS)
 
 
-def asamin(func, x0):
+def asa(func, x0, **kw):
     cdef USER_DEFINES OPTIONS
-    cdef LONG_INT rand_seed
+    cdef LONG_INT rand_seed = kw.get("seed", 0)
     cdef int exit_status, valid_state_gen_flag, param_type
-    cdef ALLOC_INT num_param
+    cdef ALLOC_INT num_param = len(x0)
     cdef double param_init_fin, param_min, param_max, tang, curve
     OPTIONS.Asa_Data_Ptr = <void*>func
-    return asa(cost_function, randflt, &rand_seed,
-            &param_init_fin, &param_min, &param_max, &tang, &curve,
+    return c_asa(cost_function, randflt, &rand_seed,
+            &param_init_fin, &param_min, &param_max,
+            &tang, &curve,
             &num_param, &param_type,
             &valid_state_gen_flag, &exit_status, &OPTIONS)
 
