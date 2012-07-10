@@ -1,0 +1,54 @@
+/***********************************************************************
+* Adaptive Simulated Annealing (ASA)
+* Lester Ingber <ingber@ingber.com>
+* Copyright (c) 1987-2012 Lester Ingber.  All Rights Reserved.
+* This ASA-LICENSE file must be included with ASA code.
+***********************************************************************/
+	
+$Id: ASA-LICENSE,v 28.12 2012/07/02 23:58:47 ingber Exp ingber $
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+			CONDITIONS
+
+1. Redistributions of ASA source code must retain the above copyright
+notice, this list of conditions, and the following disclaimer.
+
+2. Redistributions in binary form must contain the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+3. All modifications to the source code must be clearly marked as
+such.  Binary redistributions based on modified source code must be
+clearly marked as modified versions in the documentation and/or other
+materials provided with the distribution.
+
+4. Notice must be given of the location of the availability of the
+unmodified current source code, e.g.,
+	http://www.ingber.com/
+in the documentation and/or other materials provided with the
+distribution or publication.  ASA also is listed at
+	http://alumni.caltech.edu/~ingber
+	http://asa-caltech.sourceforge.net
+	https://code.google.com/p/adaptive-simulated-annealing
+
+5. The name of Lester Ingber may not be used to endorse or promote
+products derived from this software without specific prior written
+permission.
+
+			DISCLAIMER
+
+This software is provided by Lester Ingber and contributors "as is" and
+any expressed or implied warranties, including, but not limited to, the
+implied warranties of merchantability and fitness for a particular
+purpose are disclaimed.  In no event shall Lester Ingber or
+contributors be liable for any direct, indirect, incidental, special,
+exemplary, or consequential damages (including, but not limited to,
+procurement of substitute goods or services; loss of use, data, or
+profits; or business interruption) however caused and on any theory of
+liability, whether in contract, strict liability, or tort (including
+negligence or otherwise) arising in any way out of the use of this
+software, even if advised of the possibility of such damage.
+
