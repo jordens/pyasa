@@ -4,19 +4,6 @@
 #   pyasa - python bindings for Lester Ingber's Adaptive Stimulated
 #   Annealing
 #   Copyright (C) 2012 Robert Jordens <jordens@phys.ethz.ch>
-#
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
     from setuptools import setup, Extension
@@ -36,7 +23,7 @@ setup(
     author="Robert Jordens",
     author_email="jordens@gmail.com",
     url="http://launchpad.net/pyasa",
-    license="hybrid BSD",
+    license="modified BSD",
     install_requires=["numpy"],
     #packages=["flycapture2"],
     cmdclass = {'build_ext': build_ext},
@@ -50,4 +37,3 @@ setup(
         #, "ASA/asa_usr.c"],
         include_dirs = ["ASA", numpy.get_include(),],
         ),]
-)
