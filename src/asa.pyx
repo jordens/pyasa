@@ -227,4 +227,5 @@ cdef double cost_function(double *x, double *xmin, double *xmax,
     except Exception, error:
         #opts.Asa_Data_Ptr[3] = <void*>error
         opts.Immediate_Exit = True
+        raise
     return cost
