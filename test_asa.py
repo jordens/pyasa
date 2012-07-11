@@ -33,8 +33,7 @@ def asa_test_cost(x):
     return q_n
 
 x0 = np.array([999., -1007, 1001, -903])
-n = x0.shape[0]
-xmax = 1e4*np.ones((4,))
+xmax = 1e4*np.ones_like(x0)
 xmin = -xmax
 
 print asa.asa(asa_test_cost, x0, xmin, xmax, full_output=True)
