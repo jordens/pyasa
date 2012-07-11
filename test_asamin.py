@@ -9,7 +9,7 @@ xmax = np.array([2., 9])
 def cost(x, xmin, xmax):
     return x[0]**2+(x[1]-3)**4, True
 
-print asa(cost, x0, xmin, xmax, full_output=True)
+#print asa(cost, x0, xmin, xmax, full_output=True)
 
 x0 = np.array([999., -1007, 1001, -903])
 n = x0.shape[0]
@@ -24,7 +24,7 @@ def cost(x, xmin, xmax):
     q_n = 0.
 
     for i in range(x.shape[0]):
-        if abs(xmin[i]-xmax[i]) < 1e-16:
+        if abs(xmin[i]-xmax[i]) < 1e-18:
             continue
 
         d_i = [1., 1000., 10., 100][i]
@@ -47,7 +47,7 @@ def cost(x, xmin, xmax):
         else:
             q_n += d_i * x[i] * x[i]
 
-    return q_n, True
+    return q_n-1, True
     #return x[0]**2+(x[1]-3)**4, True
 
 print asa(cost, x0, xmin, xmax, full_output=True)

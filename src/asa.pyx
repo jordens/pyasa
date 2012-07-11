@@ -67,17 +67,18 @@ def asa(func,
         np.ndarray[np.double_t, ndim=1] xmax,
         full_output=False,
         parameter_type=None, rand_seed=696969, 
-        limit_acceptances=1000, limit_generated=100000,
+        limit_acceptances=1000, limit_generated=99999,
         limit_invalid_generated_states=1000,
-        accepted_to_generated_ratio=1e-6,
-        cost_precision=1e-18, maximum_cost_repeat=2,
-        number_cost_samples=2, temperature_ratio_scale=1e-5,
+        accepted_to_generated_ratio=1e-4,
+        cost_precision=1e-18, maximum_cost_repeat=5,
+        number_cost_samples=5, temperature_ratio_scale=1e-5,
         cost_parameter_scale_ratio=1., temperature_anneal_scale=100., 
         include_integer_parameters=False, user_initial_parameters=False,
         sequential_parameters=-1, initial_parameter_temperature=1.,
         acceptance_frequency_modulus=100,
         generated_frequency_modulus=10000, reanneal_cost=1,
-        reanneal_parameters=1, delta_x=1e-3,
+        reanneal_parameters=1, delta_x=1e-3, 
+        #asa_out_file="asa.log",
         ):
  
     cdef USER_DEFINES opts
@@ -86,8 +87,8 @@ def asa(func,
     cdef int n = x0.shape[0]
     cdef np.ndarray param_type = -np.ones([n], dtype=np.int)
     cdef ALLOC_INT param_num = n
-    cdef np.ndarray curve = np.empty([n, n], dtype=np.double)
-    cdef np.ndarray tang = np.empty([n], dtype=np.double)
+    cdef np.ndarray curve = np.zeros([n, n], dtype=np.double)
+    cdef np.ndarray tang = np.zeros([n], dtype=np.double)
     cdef double f0
 
     if parameter_type is not None:
@@ -118,10 +119,15 @@ def asa(func,
     opts.Delta_X = delta_x
     opts.User_Tangents = False
     opts.Curvature_0 = False
-    #opts.Asa_Out_File = "asa.log"
+    #opts.Asa_Out_File = asa_out_file
+    opts.Asa_Recursive_Level = 0
 
     opts.Asa_Data_Ptr = <void*>func
     opts.Asa_Data_Dim_Ptr = 1
+
+    #opts.Immediate_Exit = False
+    # test_in_cost_func
+    # use_rejected_cost
 
     resettable_randflt(&seed, 1)
     f0 = c_asa(cost_function, randflt, &seed,

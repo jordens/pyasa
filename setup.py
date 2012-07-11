@@ -30,6 +30,7 @@ setup(
     ext_modules = [Extension("asa",
         define_macros = [("OPTIONAL_DATA_PTR", "1"),
                          ("USER_TYPE", "void *"),
+                         #("USER_ASA_OUT", "1"),
                          ("ASA_LIB", "1")],
         extra_compile_args=["-g", "-ffloat-store"],
         sources = ["src/asa.pyx", "ASA/asa.c", "src/asa_rand.c"],
