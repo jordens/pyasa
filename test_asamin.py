@@ -31,7 +31,7 @@ def asa_test_cost(x):
             q_n += c_r * d_i * z_i * z_i
         else:
             q_n += d_i * x[i] * x[i]
-    return q_n-1, True
+    return q_n
 
 x0 = np.array([999., -1007, 1001, -903])
 n = x0.shape[0]
