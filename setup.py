@@ -17,7 +17,7 @@ import os
 setup(
     name="pyasa",
     description="Adaptive Simulated Annealing",
-    long_description= """Python bindings for the code from 
+    long_description= """Python bindings for the ASA code from 
     http://www.ingber.com/#ASA""",
     version="0.0+dev",
     author="Robert Jordens",
