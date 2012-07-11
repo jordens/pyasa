@@ -28,7 +28,7 @@ setup(
     #packages=["asa"],
     cmdclass = {"build_ext": build_ext},
     ext_modules = [Extension("asa",
-        define_macros = [("ASA_LIB", "1")
+        define_macros = [("ASA_LIB", "1"),
                          ("OPTIONAL_DATA_PTR", "1"),
                          ("USER_TYPE", "void *"),
                          #("USER_ASA_OUT", "1"),
