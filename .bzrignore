@@ -2,3 +2,8 @@
 ./dist
 ./src/asa.c
 ./asa_out
+./deb_dist
+./*.egg-info
+ASA/asa_out
+ASA/asa_run
+ASA/asa_usr_out

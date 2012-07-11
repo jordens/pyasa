@@ -1,3 +1,9 @@
+# -*- coding: utf8 -*-
+#
+#   pyasa - python bindings for Lester Ingber's Adaptive Stimulated
+#   Annealing
+#   Copyright (C) 2012 Robert Jordens <jordens@phys.ethz.ch>
+
 cdef extern from "asa_usr_asa.h":
     ctypedef int BOOL
     ctypedef int ALLOC_INT

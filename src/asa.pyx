@@ -65,7 +65,7 @@ def asa(func,
         np.ndarray[np.double_t, ndim=1] x0,
         np.ndarray[np.double_t, ndim=1] xmin,
         np.ndarray[np.double_t, ndim=1] xmax,
-        full_output=False,
+        full_output=False, args=(), kwargs={},
         parameter_type=None, rand_seed=696969, 
         limit_acceptances=1000, limit_generated=99999,
         limit_invalid_generated_states=1000,
@@ -80,19 +80,25 @@ def asa(func,
         reanneal_parameters=1, delta_x=1e-3, 
         #asa_out_file="asa.log",
         ):
- 
     cdef USER_DEFINES opts
-    cdef LONG_INT seed = rand_seed
-    cdef int exit_code = 0, cost_flag = 1
-    cdef int n = x0.shape[0]
-    cdef np.ndarray param_type = -np.ones([n], dtype=np.int)
-    cdef ALLOC_INT param_num = n
-    cdef np.ndarray curve = np.zeros([n, n], dtype=np.double)
-    cdef np.ndarray tang = np.zeros([n], dtype=np.double)
+    cdef LONG_INT seed=rand_seed
+    cdef int exit_code=0, cost_flag=1
+    cdef int n=x0.shape[0]
+    cdef np.ndarray param_type
+    cdef ALLOC_INT param_num=n
+    cdef np.ndarray curve=np.zeros([n, n], dtype=np.double)
+    cdef np.ndarray tang=np.zeros([n], dtype=np.double)
     cdef double f0
+    cdef void* data[3]
+
+    data[0] = <void*>func
+    data[1] = <void*>args
+    data[2] = <void*>kwargs
 
     if parameter_type is not None:
         param_type = parameter_type
+    else:
+        param_type = -np.ones([n], dtype=np.int)
 
     opts.Limit_Acceptances = limit_acceptances
     opts.Limit_Generated = limit_generated
@@ -122,17 +128,15 @@ def asa(func,
     #opts.Asa_Out_File = asa_out_file
     opts.Asa_Recursive_Level = 0
 
-    opts.Asa_Data_Ptr = <void*>func
-    opts.Asa_Data_Dim_Ptr = 1
+    opts.Asa_Data_Ptr = data
+    opts.Asa_Data_Dim_Ptr = 3
 
     #opts.Immediate_Exit = False
-    # test_in_cost_func
-    # use_rejected_cost
 
     resettable_randflt(&seed, 1)
     f0 = c_asa(cost_function, randflt, &seed,
-            <double *>x0.data, <double *>xmin.data, <double *>xmax.data,
-            <double *>tang.data, <double *>curve.data,
+            <double*>x0.data, <double*>xmin.data, <double*>xmax.data,
+            <double*>tang.data, <double*>curve.data,
             &param_num, <int *>param_type.data,
             &cost_flag, &exit_code, &opts)
     if full_output:
@@ -146,14 +150,18 @@ cdef double cost_function(double *x, double *xmin, double *xmax,
                ALLOC_INT *param_num, int *param_type,
                int *cost_flag, int *exit_code,
                USER_DEFINES * opts):
-    cdef double f
+    cdef double f = 0.
+    cdef object func, args, kwargs
     cdef np.npy_intp n = param_num[0]
+    func = <object>opts.Asa_Data_Ptr[0]
+    args = <object>opts.Asa_Data_Ptr[1]
+    kwargs = <object>opts.Asa_Data_Ptr[2]
     x_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, x)
-    xmin_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmin)
-    xmax_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmax)
+    #xmin_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmin)
+    #xmax_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmax)
     try:
-        r = (<object>opts.Asa_Data_Ptr)(x_, xmin_, xmax_)
+        r = func(x_, *args, **kwargs)
+        f = np.asarray(r).sum()
     except ValueError:
         cost_flag[0] = False
-    f = np.asarray(r).sum()
     return f

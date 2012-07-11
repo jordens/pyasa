@@ -1,3 +1,8 @@
+/*
+ *   pyasa - python bindings for Lester Ingber's Adaptive Stimulated
+ *   Annealing
+ */
+
 #if ASA_LIB
   LONG_INT asa_seed (LONG_INT seed);
 #endif

@@ -1,3 +1,8 @@
+/*
+ *   pyasa - python bindings for Lester Ingber's Adaptive Stimulated
+ *   Annealing
+ */
+
 #include "asa_usr_asa.h"
 #include "asa_rand.h"
 
@@ -164,5 +169,3 @@ resettable_randflt (rand_seed, reset)
 
   return (rranf);
 }
-
-
