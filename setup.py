@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
 #
-#   pyasa - python bindings for Lester Ingber's Adaptive Stimulated
-#   Annealing
-#   Copyright (C) 2012 Robert Jordens <jordens@phys.ethz.ch>
+#   pyasa - python bindings for Adaptive Simulated Annealing
+#   Copyright (C) 2012 Robert Jordens <jordens@gmail.com>
 
 try:
     from setuptools import setup, Extension
@@ -17,8 +16,9 @@ import os
 
 setup(
     name="pyasa",
-    description="python bindings for Lester Ingber's Adaptive Stimulated Annealing",
-    long_description= """http://www.ingber.com/#ASA""",
+    description="Adaptive Simulated Annealing",
+    long_description= """Python bindings for the code from 
+    http://www.ingber.com/#ASA""",
     version="0.0+dev",
     author="Robert Jordens",
     author_email="jordens@gmail.com",
@@ -32,8 +32,8 @@ setup(
                          ("USER_TYPE", "void *"),
                          #("USER_ASA_OUT", "1"),
                          ("ASA_LIB", "1")],
-        extra_compile_args=["-g", "-ffloat-store"],
-        sources = ["src/asa.pyx", "ASA/asa.c", "src/asa_rand.c"],
+        #extra_compile_args=["-g", "-ffloat-store"],
+        sources = ["src/asa.pyx", "src/asa_rand.c", "ASA/asa.c"],
         include_dirs = ["ASA", numpy.get_include(),],
         ),],
 )

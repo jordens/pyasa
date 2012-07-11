@@ -1,8 +1,7 @@
 # -*- coding: utf8 -*-
 #
-#   pyasa - python bindings for Lester Ingber's Adaptive Stimulated
-#   Annealing
-#   Copyright (C) 2012 Robert Jordens <jordens@phys.ethz.ch>
+#   pyasa - python bindings for Adaptive Simulated Annealing
+#   Copyright (C) 2012 Robert Jordens <jordens@gmail.com>
 
 import numpy as np
 

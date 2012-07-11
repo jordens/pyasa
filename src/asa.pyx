@@ -1,8 +1,7 @@
 # -*- coding: utf8 -*-
 #
-#   pyasa - python bindings for Lester Ingber's Adaptive Stimulated
-#   Annealing
-#   Copyright (C) 2012 Robert Jordens <jordens@phys.ethz.ch>
+#   pyasa - python bindings for Adaptive Simulated Annealing
+#   Copyright (C) 2012 Robert Jordens <jordens@gmail.com>
 
 import numpy as np
 cimport numpy as np
@@ -64,18 +63,23 @@ class CostParameterError(Exception):
     pass
 
 
-def asa(object func,
-        np.ndarray[np.double_t, ndim=1] x0,
-        np.ndarray[np.double_t, ndim=1] xmin,
-        np.ndarray[np.double_t, ndim=1] xmax,
-        int full_output=False, tuple args=(), dict kwargs={},
+def asa(object func not None,
+        np.ndarray[np.double_t, ndim=1] x0 not None,
+        np.ndarray[np.double_t, ndim=1] xmin not None,
+        np.ndarray[np.double_t, ndim=1] xmax not None,
+        int full_output=False,
+        tuple args=(),
+        dict kwargs={},
         np.ndarray[np.int_t, ndim=1] parameter_type=None,
         long rand_seed=696969,
-        int limit_acceptances=1000, int limit_generated=99999,
+        int limit_acceptances=1000,
+        int limit_generated=99999,
         int limit_invalid_generated_states=1000,
         double accepted_to_generated_ratio=1e-4,
-        double cost_precision=1e-18, int maximum_cost_repeat=5,
-        int number_cost_samples=5, double temperature_ratio_scale=1e-5,
+        double cost_precision=1e-18,
+        int maximum_cost_repeat=5,
+        int number_cost_samples=5,
+        double temperature_ratio_scale=1e-5,
         double cost_parameter_scale_ratio=1.,
         double temperature_anneal_scale=100., 
         int include_integer_parameters=False,
@@ -83,15 +87,16 @@ def asa(object func,
         int sequential_parameters=-1,
         double initial_parameter_temperature=1.,
         int acceptance_frequency_modulus=100,
-        int generated_frequency_modulus=10000, int reanneal_cost=1,
-        int reanneal_parameters=1, double delta_x=1e-3, 
+        int generated_frequency_modulus=10000,
+        int reanneal_cost=1,
+        int reanneal_parameters=1,
+        double delta_x=1e-3, 
         #asa_out_file="asa.log",
         ):
     cdef USER_DEFINES opts
     cdef LONG_INT seed=rand_seed
     cdef int exit_code=0, cost_flag=1
     cdef int n=x0.shape[0]
-    cdef np.ndarray param_type
     cdef ALLOC_INT param_num=n
     cdef np.ndarray curve=np.zeros([n, n], dtype=np.double)
     cdef np.ndarray tang=np.zeros([n], dtype=np.double)
@@ -103,10 +108,8 @@ def asa(object func,
     data[2] = <void*>kwargs
     data[3] = NULL # exceptions here
 
-    if parameter_type is not None:
-        param_type = parameter_type
-    else:
-        param_type = -np.ones([n], dtype=np.int)
+    if parameter_type is None:
+        parameter_type = -np.ones([n], dtype=np.int)
 
     opts.Limit_Acceptances = limit_acceptances
     opts.Limit_Generated = limit_generated
@@ -145,7 +148,7 @@ def asa(object func,
     f0 = c_asa(cost_function, randflt, &seed,
             <double*>x0.data, <double*>xmin.data, <double*>xmax.data,
             <double*>tang.data, <double*>curve.data,
-            &param_num, <int *>param_type.data,
+            &param_num, <int *>parameter_type.data,
             &cost_flag, &exit_code, &opts)
     if exit_code == IMMEDIATE_EXIT:
         raise Exception #<object>data[3]
@@ -158,8 +161,7 @@ def asa(object func,
 cdef double cost_function(double *x, double *xmin, double *xmax,
                double *tang, double *curve,
                ALLOC_INT *param_num, int *param_type,
-               int *cost_flag, int *exit_code,
-               USER_DEFINES * opts):
+               int *cost_flag, int *exit_code, USER_DEFINES * opts):
     cdef double cost = 0.
     cdef object func, args, kwargs
     cdef np.npy_intp n = param_num[0]

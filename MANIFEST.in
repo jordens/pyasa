@@ -1,0 +1,6 @@
+include README.rst COPYING
+include test_asa.py
+include src/asa_def.pxd
+include src/asa_rand.h
+include src/asa.c
+include ASA/*.h ASA/*.c ASA/ASA-*

@@ -1,6 +1,5 @@
 /*
- *   pyasa - python bindings for Lester Ingber's Adaptive Stimulated
- *   Annealing
+ *   pyasa - python bindings for Adaptive Simulated Annealing
  */
 
 #if ASA_LIB
