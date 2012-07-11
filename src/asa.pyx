@@ -7,8 +7,6 @@
 import numpy as np
 cimport numpy as np
 
-from cpython cimport PyObject, Py_INCREF
-
 from asa_def cimport *
 
 np.import_array()
@@ -61,6 +59,11 @@ Note that if a calloc memory allocation fails in asa_usr.c, this error will
 call Exit_USER() to print the location to stdout and then return -2.""",
 }
 
+
+class CostParameterError(Exception):
+    pass
+
+
 def asa(func,
         np.ndarray[np.double_t, ndim=1] x0,
         np.ndarray[np.double_t, ndim=1] xmin,
@@ -89,11 +92,12 @@ def asa(func,
     cdef np.ndarray curve=np.zeros([n, n], dtype=np.double)
     cdef np.ndarray tang=np.zeros([n], dtype=np.double)
     cdef double f0
-    cdef void* data[3]
+    cdef void* data[4]
 
     data[0] = <void*>func
     data[1] = <void*>args
     data[2] = <void*>kwargs
+    data[3] = NULL # exceptions here
 
     if parameter_type is not None:
         param_type = parameter_type
@@ -129,9 +133,9 @@ def asa(func,
     opts.Asa_Recursive_Level = 0
 
     opts.Asa_Data_Ptr = data
-    opts.Asa_Data_Dim_Ptr = 3
+    opts.Asa_Data_Dim_Ptr = 4
 
-    #opts.Immediate_Exit = False
+    opts.Immediate_Exit = False
 
     resettable_randflt(&seed, 1)
     f0 = c_asa(cost_function, randflt, &seed,
@@ -139,6 +143,8 @@ def asa(func,
             <double*>tang.data, <double*>curve.data,
             &param_num, <int *>param_type.data,
             &cost_flag, &exit_code, &opts)
+    if exit_code == IMMEDIATE_EXIT:
+        raise Exception #<object>data[3]
     if full_output:
         return x0, f0, exit_code, asa_errors[exit_code]
     else:
@@ -150,7 +156,7 @@ cdef double cost_function(double *x, double *xmin, double *xmax,
                ALLOC_INT *param_num, int *param_type,
                int *cost_flag, int *exit_code,
                USER_DEFINES * opts):
-    cdef double f = 0.
+    cdef double cost = 0.
     cdef object func, args, kwargs
     cdef np.npy_intp n = param_num[0]
     func = <object>opts.Asa_Data_Ptr[0]
@@ -160,8 +166,10 @@ cdef double cost_function(double *x, double *xmin, double *xmax,
     #xmin_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmin)
     #xmax_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmax)
     try:
-        r = func(x_, *args, **kwargs)
-        f = np.asarray(r).sum()
-    except ValueError:
+        cost = func(x_, *args, **kwargs)
+    except CostParameterError:
         cost_flag[0] = False
-    return f
+    except Exception, error:
+        #opts.Asa_Data_Ptr[3] = <void*>error
+        opts.Immediate_Exit = True
+    return cost

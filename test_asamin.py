@@ -6,14 +6,13 @@
 
 import numpy as np
 
-from asa import asa
+import asa
 
 def asa_test_cost(x):
     s_i = .2
     t_i = .05
     c_r = .15
     q_n = 0.
-
     for i in range(x.shape[0]):
         d_i = [1., 1000., 10., 100][i]
         if x[i] > 0:
@@ -39,4 +38,4 @@ n = x0.shape[0]
 xmax = 1e4*np.ones((4,))
 xmin = -xmax
 
-print asa(asa_test_cost, x0, xmin, xmax, full_output=True)
+print asa.asa(asa_test_cost, x0, xmin, xmax, full_output=True)
