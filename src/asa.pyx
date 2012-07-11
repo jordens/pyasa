@@ -108,6 +108,9 @@ def asa(object func not None,
     """Adaptive Simulated Annealing
     http://www.ingber.com/#ASA
         
+    Parameters:
+    -----------
+
         object func not None,
         np.ndarray[np.double_t, ndim=1] x0 not None,
         np.ndarray[np.double_t, ndim=1] xmin not None,
@@ -136,6 +139,11 @@ def asa(object func not None,
         int reanneal_cost=1,
         int reanneal_parameters=1,
         double delta_x=1e-3,
+
+    Returns:
+    --------
+
+        x0, f0, exit_code, asa_errors[exit_code], curve, asa_opts
     """
     cdef USER_DEFINES opts
     cdef LONG_INT seed=rand_seed
@@ -196,10 +204,17 @@ def asa(object func not None,
             &param_num, <int *>parameter_type.data,
             &cost_flag, &exit_code, &opts)
 
+    asa_opts = dict(
+	    n_accepted=opts.N_Accepted,
+	    n_generated=opts.N_Generated,
+	    best_cost=opts.Best_Cost[0],
+	    last_cost=opts.Last_Cost[0],
+	    )
+
     if exit_code == IMMEDIATE_EXIT:
         raise Exception #<object>data[3]
     if full_output:
-        return x0, f0, exit_code, asa_errors[exit_code]
+        return x0, f0, exit_code, asa_errors[exit_code], curve, asa_opts
     else:
         return x0
 
