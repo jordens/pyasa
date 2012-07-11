@@ -87,9 +87,9 @@ cdef extern from "asa_rand.h":
 
 
 cdef extern from "asa.h":
-    double c_asa "asa" (double (*user_cost_function)
-         (double *, double *, double *, double *, double *, ALLOC_INT *,
-          int *, int *, int *, USER_DEFINES *),
+    double c_asa "asa" (double (*user_cost_function) (
+            double *, double *, double *, double *, double *,
+            ALLOC_INT *, int *, int *, int *, USER_DEFINES *),
          double (*user_random_generator) (LONG_INT *), LONG_INT * rand_seed,
          double *parameter_initial_final, double *parameter_minimum,
          double *parameter_maximum, double *tangents, double *curvature,
@@ -98,27 +98,70 @@ cdef extern from "asa.h":
          USER_DEFINES * OPTIONS)
 
 
-def asa(func, x0, **kw):
+def asa(func,
+        np.ndarray[np.double_t, ndim=1] x0,
+        np.ndarray[np.double_t, ndim=1] xmin,
+        np.ndarray[np.double_t, ndim=1] xmax,
+        seed=0, typ=-1):
     cdef USER_DEFINES OPTIONS
-    cdef LONG_INT rand_seed = kw.get("seed", 0)
-    cdef int exit_status, valid_state_gen_flag, param_type
-    cdef ALLOC_INT num_param = len(x0)
-    cdef double param_init_fin, param_min, param_max, tang, curve
+    cdef LONG_INT rand_seed = seed
+    cdef int exit_status, valid_state_gen_flag, param_type = typ
+    cdef ALLOC_INT param_num = x0.shape[0]
+    cdef np.ndarray curve = np.empty([x0.shape[0]], dtype=np.double)
+    cdef np.ndarray tang = np.empty([x0.shape[0]], dtype=np.double)
+    cdef double f0
+
+    OPTIONS.Limit_Acceptances = 1000
+    OPTIONS.Limit_Generated = 99999
+    OPTIONS.Limit_Invalid_Generated_States = 1000
+    OPTIONS.Accepted_To_Generated_Ratio = 1.0E-4
+
+    OPTIONS.Cost_Precision = 1.0E-18
+    OPTIONS.Maximum_Cost_Repeat = 5
+    OPTIONS.Number_Cost_Samples = 5
+    OPTIONS.Temperature_Ratio_Scale = 1.0E-5
+    OPTIONS.Cost_Parameter_Scale_Ratio = 1.0
+    OPTIONS.Temperature_Anneal_Scale = 100.0
+
+    OPTIONS.Include_Integer_Parameters = False
+    OPTIONS.User_Initial_Parameters = False
+    OPTIONS.Sequential_Parameters = -1
+    OPTIONS.Initial_Parameter_Temperature = 1.0
+
+    OPTIONS.Acceptance_Frequency_Modulus = 100
+    OPTIONS.Generated_Frequency_Modulus = 10000
+    OPTIONS.Reanneal_Cost = 1
+    OPTIONS.Reanneal_Parameters = True
+
+    OPTIONS.Delta_X = 0.001
+    OPTIONS.User_Tangents = False
+    OPTIONS.Curvature_0 = False
+    #OPTIONS.Asa_Out_File = "asa.log"
+
     OPTIONS.Asa_Data_Ptr = <void*>func
-    return c_asa(cost_function, randflt, &rand_seed,
-            &param_init_fin, &param_min, &param_max,
-            &tang, &curve,
-            &num_param, &param_type,
+    OPTIONS.Asa_Data_Dim_Ptr = 1
+
+    f0 = c_asa(cost_function, randflt, &rand_seed,
+            <double *>x0.data, <double *>xmin.data, <double *>xmax.data,
+            <double *>tang.data, <double *>curve.data,
+            &param_num, &param_type,
             &valid_state_gen_flag, &exit_status, &OPTIONS)
+    return x0, f0, exit_status
 
 
-cdef double cost_function (double *x,
-               double *parameter_lower_bound,
-               double *parameter_upper_bound,
-               double *cost_tangents,
-               double *cost_curvature,
-               ALLOC_INT * parameter_dimension,
-               int *parameter_int_real,
+cdef double cost_function(double *x, double *xmin, double *xmax,
+               double *tang, double *curve,
+               ALLOC_INT *param_num, int *param_type,
                int *cost_flag, int *exit_code,
                USER_DEFINES * USER_OPTIONS):
-    return (<object>USER_OPTIONS.Asa_Data_Ptr)()
+    cdef double f
+    cdef int n = 1 #<int *>param_num
+    x_ = np.PyArray_SimpleNewFromData(1, [n], np.dtype("double"), x)
+    xmin_ = np.PyArray_SimpleNewFromData(1, [n], np.double, xmin)
+    xmax_ = np.PyArray_SimpleNewFromData(1, [n], np.double, xmax)
+    r = (<object>USER_OPTIONS.Asa_Data_Ptr)(x_, xmin_, xmax_)
+    f = float(r[0])
+    #*cost_flag = <int>r[1]
+    #*exit_code = <int>r[2]
+    return f
+
