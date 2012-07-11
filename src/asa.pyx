@@ -105,6 +105,38 @@ def asa(object func not None,
         double delta_x=1e-3, 
         #asa_out_file="asa.log",
         ):
+    """Adaptive Simulated Annealing
+    http://www.ingber.com/#ASA
+        
+        object func not None,
+        np.ndarray[np.double_t, ndim=1] x0 not None,
+        np.ndarray[np.double_t, ndim=1] xmin not None,
+        np.ndarray[np.double_t, ndim=1] xmax not None,
+        int full_output=False,
+        tuple args=(),
+        dict kwargs={},
+        np.ndarray[np.int_t, ndim=1] parameter_type=None,
+        long rand_seed=696969,
+        int limit_acceptances=1000,
+        int limit_generated=99999,
+        int limit_invalid_generated_states=1000,
+        double accepted_to_generated_ratio=1e-4,
+        double cost_precision=1e-18,
+        int maximum_cost_repeat=5,
+        int number_cost_samples=5,
+        double temperature_ratio_scale=1e-5,
+        double cost_parameter_scale_ratio=1.,
+        double temperature_anneal_scale=100., 
+        int include_integer_parameters=False,
+        int user_initial_parameters=False,
+        int sequential_parameters=-1,
+        double initial_parameter_temperature=1.,
+        int acceptance_frequency_modulus=100,
+        int generated_frequency_modulus=10000,
+        int reanneal_cost=1,
+        int reanneal_parameters=1,
+        double delta_x=1e-3,
+    """
     cdef USER_DEFINES opts
     cdef LONG_INT seed=rand_seed
     cdef int exit_code=0, cost_flag=1
@@ -157,11 +189,13 @@ def asa(object func not None,
     opts.Immediate_Exit = False
 
     resettable_randflt(&seed, 1)
+
     f0 = c_asa(cost_function, randflt, &seed,
             <double*>x0.data, <double*>xmin.data, <double*>xmax.data,
             <double*>tang.data, <double*>curve.data,
             &param_num, <int *>parameter_type.data,
             &cost_flag, &exit_code, &opts)
+
     if exit_code == IMMEDIATE_EXIT:
         raise Exception #<object>data[3]
     if full_output:
@@ -175,14 +209,17 @@ cdef double cost_function(double *x, double *xmin, double *xmax,
                ALLOC_INT *param_num, int *param_type,
                int *cost_flag, int *exit_code, USER_DEFINES * opts):
     cdef double cost = 0.
+    cdef np.ndarray x_
     cdef object func, args, kwargs
     cdef np.npy_intp n = param_num[0]
+
     func = <object>opts.Asa_Data_Ptr[0]
     args = <object>opts.Asa_Data_Ptr[1]
     kwargs = <object>opts.Asa_Data_Ptr[2]
     x_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, x)
     #xmin_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmin)
     #xmax_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmax)
+
     try:
         cost = func(x_, *args, **kwargs)
     except CostParameterError:
