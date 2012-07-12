@@ -7,41 +7,25 @@ import numpy as np
 
 import asa
 
-def asa_test_cost(x):
+s, t, c = .2, .05, .15
+d = np.array([1., 1000., 10., 100.])
+
+def cost(x):
     #raise ValueError("rrr")
-    s_i = .2
-    t_i = .05
-    c_r = .15
-    q_n = 0.
-    for i in range(x.shape[0]):
-        d_i = [1., 1000., 10., 100][i]
-        if x[i] > 0:
-            k_i = int(x[i] / s_i + .5)
-        elif x[i] < 0:
-            k_i = int(x[i] / s_i - .5)
-        else:
-            k_i = 0
-        if abs(k_i * s_i - x[i]) < t_i:
-            if k_i < 0:
-                z_i = k_i * s_i + t_i
-            elif k_i > 0:
-                z_i = k_i * s_i - t_i
-            else:
-                z_i = 0.
-            q_n += c_r * d_i * z_i * z_i
-        else:
-            q_n += d_i * x[i] * x[i]
-    return q_n
+    k = np.rint(x/s)
+    r = np.fabs(k*s-x)
+    p = np.sign(k)
+    q = np.where(r<t, c*(p*p*k*s-p*t)**2, x**2)
+    return (d*q).sum()
 
 x0 = np.array([999., -1007, 1001, -903])
 xmax = 1e4*np.ones_like(x0)
-xmin = -xmax
 
-print asa.asa(asa_test_cost, x0, xmin, xmax, full_output=True)
+print asa.asa(cost, x0, -xmax, xmax, full_output=True)
 
 # simple leak check
 #while True:
 #    try:
-#        asa.asa(asa_test_cost, x0, xmin, xmax, full_output=True)
+#        asa.asa(cost, x0, -xmax, xmax, full_output=True)
 #    except Exception:
 #        pass

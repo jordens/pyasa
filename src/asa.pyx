@@ -3,6 +3,8 @@
 #   pyasa - python bindings for Adaptive Simulated Annealing
 #   Copyright (C) 2012 Robert Jordens <jordens@gmail.com>
 
+"""Adaptive Simulated Annealing"""
+
 import sys
 
 import numpy as np
@@ -14,68 +16,64 @@ from asa_def cimport *
 
 np.import_array()
 
-asa_errors = {
+asa_codes = {
 
-    NORMAL_EXIT: """Given the criteria set, the
-search has run its normal course, e.g., when Limit_Acceptances or
-Limit_Generated is reached.""", 
+    NORMAL_EXIT: """Given the criteria set, the search has run its
+    normal course, e.g., when Limit_Acceptances or Limit_Generated is
+    reached.""", 
 
     P_TEMP_TOO_SMALL: """A parameter temperature was too small using the
-set criteria.  Often this is an acceptable status code.""",
+    set criteria. Often this is an acceptable status code.""",
 
-    C_TEMP_TOO_SMALL: """The cost temperature was too small using the set
-criteria.  Often this is an acceptable status code.""",
+    C_TEMP_TOO_SMALL: """The cost temperature was too small using the
+    set criteria. Often this is an acceptable status code.""",
 
-    COST_REPEATING: """The cost function value repeated a number of times
-using the set criteria. Often this is an acceptable status code.""",
+    COST_REPEATING: """The cost function value repeated a number of
+    times using the set criteria. Often this is an acceptable status
+    code.""",
 
-    TOO_MANY_INVALID_STATES: """Too many repetitive generated states were
-invalid using the set criteria. This is helpful when using *cost_flag, as
-discussed above, to include constraints.""",
+    TOO_MANY_INVALID_STATES: """Too many repetitive generated states
+    were invalid using the set criteria. A result of raising
+    CostParameterError, to include constraints.""",
 
-    IMMEDIATE_EXIT: """The user has set OPTIONS−>Immediate_Exit to TRUE, or
-deleted file asa_exit_anytime when ASA_EXIT_ANYTIME is TRUE.""",
+    IMMEDIATE_EXIT: """The user has set OPTIONS−>Immediate_Exit to TRUE,
+    or deleted file asa_exit_anytime when ASA_EXIT_ANYTIME is
+    TRUE. (will not happen, converted to exception)""",
 
     INVALID_USER_INPUT: """The user has introduced invalid input. When
-entering asa (), a function asa_test_asa_options () checks out many
-user−defined parameters and OPTIONS, and prints out invalid OPTIONS when
-ASA_PRINT is set to TRUE.""",
+    entering asa(), a function asa_test_asa_options() checks out many
+    user−defined parameters and OPTIONS, and prints out invalid OPTIONS
+    when ASA_PRINT is set to TRUE.""",
 
     INVALID_COST_FUNCTION: """The user has returned a value of the cost
-function to asa () which is not a valid number, e.g., not between
--MAX_DOUBLE and MAX_DOUBLE.  Or, the user has returned a value of a
-parameter no longer within its proper range (excluding cases where the
-user has set the lower bound equal to the upper bound to remove a parameter
-from consideration).""",
+    function to asa () which is not a valid number, e.g., not between
+    -MAX_DOUBLE and MAX_DOUBLE.  Or, the user has returned a value of a
+    parameter no longer within its proper range (excluding cases where
+    the user has set the lower bound equal to the upper bound to remove
+    a parameter from consideration).""",
 
     INVALID_COST_FUNCTION_DERIV: """While calculating numerical cost
-derivatives, a value of the cost function was returned which is not a
-valid number, e.g., not between -MAX_DOUBLE and MAX_DOUBLE. Or, while
-calculating numerical cost derivatives, a value of a parameter no longer
-within its proper range (excluding cases where the user has set the
-lower bound equal to the upper bound to remove a parameter from
-consideration) was set.  In such cases, review the bounds of parameters
-and the OPTIONS used to determine how derivatives are calculated and
-used.  When calculating derivatives, an invalid cost function, i.e.,
-returning *cost_flag = FALSE from the cost function, will exit asa()
-with *exit_code INVALID_COST_FUNCTION_DERIV. Also, when calculating
-derivatives, no extra test is performed to check that parameters are
-within their lower and upper bounds (since meshes for derivatives may
-exceed these bounds). If this is not desired, then within the cost
-function, within a test for USER_OPTIONS->Locate_Cost == 3, a decision
-may be made whether to return this *exit_code.""",
+    derivatives, a value of the cost function was returned which is not
+    a valid number, e.g., not between -MAX_DOUBLE and MAX_DOUBLE. Or,
+    while calculating numerical cost derivatives, a value of a parameter
+    no longer within its proper range (excluding cases where the user
+    has set the lower bound equal to the upper bound to remove a
+    parameter from consideration) was set.""",
 
-    CALLOC_FAILED: """Calloc memory allocation has failed in asa.c. This error
-will call Exit_ASA(), the location will be printed to stdout, and asa () will
-return the double -1 to the calling program. In asa_usr.c, if asa () returns
-this *exit_code a warning will be printed both to stdout and to USER_OUT.
-Note that if a calloc memory allocation fails in asa_usr.c, this error will
-call Exit_USER() to print the location to stdout and then return -2.""",
+    CALLOC_FAILED: """Calloc memory allocation has failed in asa.c. This
+    error will call Exit_ASA(), the location will be printed to stdout,
+    and asa() will return the double -1 to the calling program. In
+    asa_usr.c, if asa() returns this *exit_code a warning will be
+    printed both to stdout and to USER_OUT.  Note that if a calloc
+    memory allocation fails in asa_usr.c, this error will call
+    Exit_USER() to print the location to stdout and then return -2.""",
 
 }
 
 
 class CostParameterError(Exception):
+    """Exception to be raised in the cost function 
+    if the parameters supplied are invalid."""
     pass
 
 
@@ -110,44 +108,120 @@ def asa(object func not None,
         #asa_out_file="asa.log",
         ):
     """Adaptive Simulated Annealing
-    http://www.ingber.com/#ASA
-        
-    Parameters:
+
+    Adaptive Simulated Annealing (ASA) is a C-language code developed to
+    statistically find the best global fit of a nonlinear constrained
+    non-convex cost-function over a D-dimensional space [1]_.
+    
+    Parameters
     -----------
+    func : function
+        Cost/merit function to minimize. Call signature:
+            func(x, *args, **kwargs)
+        Must return a float.
+        Should raise CostParameterError if the parameters are invalid.
+        All other exceptions raised lead to termination of the 
+        optimization (see ASA IMMEDIATE_EXIT option [3]_).
+    x0 : (N,) ndarray
+        Initial parameters
+    xmin : (N,) ndarray
+        Minimally allowed values for parameters
+    xmin : (N,) ndarray
+        Maximally allowed values for parameters
+    full_output : bool, optional
+        return more information on completion (not just the final 
+        parameter values)
+    args : tuple, optional
+        additional positional arguments to pass to `func()`
+    kwargs : dict, optional
+        additional keyword arguments to pass to `func()`
+    parameter_type : (N,) ndarray, optional
+        array of type flags for each parameter:
+            -1: REAL, -2: REAL_NO_REANNEAL
+            1: INTEGER, 2: INTEGER_NO_REANNEAL
 
-        object func not None,
-        np.ndarray[np.double_t, ndim=1] x0 not None,
-        np.ndarray[np.double_t, ndim=1] xmin not None,
-        np.ndarray[np.double_t, ndim=1] xmax not None,
-        int full_output=False,
-        tuple args=(),
-        dict kwargs={},
-        np.ndarray[np.int_t, ndim=1] parameter_type=None,
-        long rand_seed=696969,
-        int limit_acceptances=1000,
-        int limit_generated=99999,
-        int limit_invalid_generated_states=1000,
-        double accepted_to_generated_ratio=1e-4,
-        double cost_precision=1e-18,
-        int maximum_cost_repeat=5,
-        int number_cost_samples=5,
-        double temperature_ratio_scale=1e-5,
-        double cost_parameter_scale_ratio=1.,
-        double temperature_anneal_scale=100., 
-        int include_integer_parameters=False,
-        int user_initial_parameters=False,
-        int sequential_parameters=-1,
-        double initial_parameter_temperature=1.,
-        int acceptance_frequency_modulus=100,
-        int generated_frequency_modulus=10000,
-        int reanneal_cost=1,
-        int reanneal_parameters=1,
-        double delta_x=1e-3,
-
-    Returns:
+    Returns
     --------
+    x0 : (N,) ndarray
+        final parameter values
+    f0 : float
+        final cost value
+    exit_code : int
+        exit status code, look up in `asa_codes` to translate to human
+        readable message.
+    asa_opts : dict
+        other parameters extracted from the ASA USER_DEFINES struct [3]_.
 
-        x0, f0, exit_code, asa_errors[exit_code], curve, asa_opts
+    Other Parameters
+    ----------------
+    See [3]_ for a detailed explanation.
+
+    rand_seed : long (696969), optional
+    limit_acceptances : int (1000), optional
+    limit_generated : int (99999), optional
+    limit_invalid_generated_states : int (1000), optional
+    accepted_to_generated_ratio : double (1e-4), optional
+    cost_precision : double (1e-18), optional
+    maximum_cost_repeat : int (5), optional
+    number_cost_samples : int (5), optional
+    temperature_ratio_scale : double (1e-5), optional
+    cost_parameter_scale_ratio : double (1.), optional
+    temperature_anneal_scale : double (100.), optional 
+    include_integer_parameters : int (False), optional
+    user_initial_parameters : int (False), optional
+    sequential_parameters : int (-1), optional
+    initial_parameter_temperature : double (1.), optional
+    acceptance_frequency_modulus : int (100), optional
+    generated_frequency_modulus : int (10000), optional
+    reanneal_cost : int (1), optional
+    reanneal_parameters : int (1), optional
+    delta_x : double (1e-3), optional
+
+    Notes
+    -----
+    This algorithm permits an annealing schedule for "temperature" T
+    decreasing exponentially in annealing-time k, T = T_0 exp(-c k^1/D).
+    The introduction of re-annealing also permits adaptation to changing
+    sensitivities in the multi-dimensional parameter-space. This
+    annealing schedule is faster than fast Cauchy annealing, where T =
+    T_0/k, and much faster than Boltzmann annealing, where T = T_0/ln k
+    [2]_.
+
+    References
+    ----------
+    For a detailed description of the algorithm, documentation of options
+    and tuning, see:
+
+    .. [1] L. Ingber, Adaptive Simulated Annealing (ASA),
+       Global optimization C-code, Caltech Alumni Association,
+       Pasadena, CA, 1993, http://www.ingber.com/#ASA-CODE
+    .. [2] L. Ingber, Very fast simulated re-annealing, 
+       Mathematical Computer Modelling, vol 12, 8, pp 967-973, 1989,
+       http://www.ingber.com/asa89_vfsr.pdf
+    .. [3] L. Ingber, ASA Readme, http://www.ingber.com/ASA-README.pdf
+    .. [4] A. Corana, M. Marchesi, C. Martini, S. Ridella,
+       Minimizing multimodal functions of continuous variables with 
+       the "simulated annealing" algorithm, ACM Trans. Mathl. Software,
+       vol 13, 3, pp 262-279, 1987
+
+    Examples
+    --------
+    The ASA test example [4]_:
+    >>> s, t, c = .2, .05, .15
+    >>> d = np.array([1., 1000., 10., 100.])
+    >>> def cost(x):
+    ...     k = np.rint(x/s)
+    ...     r = np.fabs(k*s-x)
+    ...     p = np.sign(k)
+    ...     q = np.where(r<t, c*(p*p*k*s-p*t)**2, x**2)
+    ...     return (d*q).sum()
+    >>> x0 = np.array([999., -1007, 1001, -903])
+    >>> xmax = 1e4*np.ones_like(x0)
+    >>> x, f, err, opts = asa(cost, x0, -xmax, xmax, full_output=True)
+    >>> print x, f, err # optimal parameters, cost, asa_code
+    [ 0.01467097  0.02876664  0.02477989 -0.03838191] 0.0 2
+    >>> print opts["n_accepted"], opts["n_generated"]
+    335 3680
     """
     cdef USER_DEFINES opts
     cdef LONG_INT seed=rand_seed
@@ -221,7 +295,7 @@ def asa(object func not None,
         else:
             raise SystemError("asa(): IMMEDIATE_EXIT without info")
     if full_output:
-        return x0, f0, exit_code, asa_errors[exit_code], curve, asa_opts
+        return x0, f0, exit_code, asa_opts
     else:
         return x0
 
