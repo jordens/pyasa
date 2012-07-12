@@ -3,8 +3,12 @@
 #   pyasa - python bindings for Adaptive Simulated Annealing
 #   Copyright (C) 2012 Robert Jordens <jordens@gmail.com>
 
+import sys
+
 import numpy as np
 cimport numpy as np
+
+from cpython cimport Py_INCREF, Py_DECREF
 
 from asa_def cimport *
 
@@ -158,7 +162,7 @@ def asa(object func not None,
     data[0] = <void*>func
     data[1] = <void*>args
     data[2] = <void*>kwargs
-    data[3] = NULL # exceptions here
+    data[3] = NULL # exc_info here
 
     if parameter_type is None:
         parameter_type = -np.ones([n], dtype=np.int)
@@ -205,14 +209,14 @@ def asa(object func not None,
             &cost_flag, &exit_code, &opts)
 
     asa_opts = dict(
-	    n_accepted=opts.N_Accepted,
-	    n_generated=opts.N_Generated,
-	    best_cost=opts.Best_Cost[0],
-	    last_cost=opts.Last_Cost[0],
-	    )
+            n_accepted=opts.N_Accepted,
+            n_generated=opts.N_Generated,
+            )
 
     if exit_code == IMMEDIATE_EXIT:
-        raise Exception #<object>data[3]
+        exc_info = <object>data[3]
+        Py_DECREF(exc_info)
+        raise exc_info[0], exc_info[1], exc_info[2]
     if full_output:
         return x0, f0, exit_code, asa_errors[exit_code], curve, asa_opts
     else:
@@ -227,20 +231,27 @@ cdef double cost_function(double *x, double *xmin, double *xmax,
     cdef np.ndarray x_
     cdef object func, args, kwargs
     cdef np.npy_intp n = param_num[0]
+    cdef void** data = <void**>opts.Asa_Data_Ptr
 
-    func = <object>opts.Asa_Data_Ptr[0]
-    args = <object>opts.Asa_Data_Ptr[1]
-    kwargs = <object>opts.Asa_Data_Ptr[2]
+    # asa() calls several times after we have set this
+    if opts.Immediate_Exit:
+        return 0.
+
+    func = <object>data[0]
+    args = <object>data[1]
+    kwargs = <object>data[2]
     x_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, x)
     #xmin_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmin)
     #xmax_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmax)
 
     try:
-        cost = func(x_, *args, **kwargs)
+        return func(x_, *args, **kwargs)
     except CostParameterError:
         cost_flag[0] = False
-    except Exception, error:
-        #opts.Asa_Data_Ptr[3] = <void*>error
+        return 0.
+    except:
+        exc_info = sys.exc_info()
+        data[3] = <void*>exc_info
+        Py_INCREF(exc_info)
         opts.Immediate_Exit = True
-        raise
-    return cost
+        return 0.

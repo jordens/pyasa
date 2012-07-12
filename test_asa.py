@@ -37,3 +37,10 @@ xmax = 1e4*np.ones_like(x0)
 xmin = -xmax
 
 print asa.asa(asa_test_cost, x0, xmin, xmax, full_output=True)
+
+# simple leak check
+#while True:
+#    try:
+#    	asa.asa(asa_test_cost, x0, xmin, xmax, full_output=True)
+#    except:
+#	pass
