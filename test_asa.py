@@ -8,6 +8,7 @@ import numpy as np
 import asa
 
 def asa_test_cost(x):
+    #raise ValueError("rrr")
     s_i = .2
     t_i = .05
     c_r = .15
@@ -41,6 +42,6 @@ print asa.asa(asa_test_cost, x0, xmin, xmax, full_output=True)
 # simple leak check
 #while True:
 #    try:
-#    	asa.asa(asa_test_cost, x0, xmin, xmax, full_output=True)
-#    except:
-#	pass
+#        asa.asa(asa_test_cost, x0, xmin, xmax, full_output=True)
+#    except Exception:
+#        pass

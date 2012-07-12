@@ -214,9 +214,12 @@ def asa(object func not None,
             )
 
     if exit_code == IMMEDIATE_EXIT:
-        exc_info = <object>data[3]
-        Py_DECREF(exc_info)
-        raise exc_info[0], exc_info[1], exc_info[2]
+        if data[3] != NULL:
+            exc_info = <object>data[3]
+            Py_DECREF(exc_info)
+            raise exc_info[0], exc_info[1], exc_info[2]
+        else:
+            raise SystemError("asa(): IMMEDIATE_EXIT without info")
     if full_output:
         return x0, f0, exit_code, asa_errors[exit_code], curve, asa_opts
     else:
@@ -227,14 +230,14 @@ cdef double cost_function(double *x, double *xmin, double *xmax,
                double *tang, double *curve,
                ALLOC_INT *param_num, int *param_type,
                int *cost_flag, int *exit_code, USER_DEFINES * opts):
-    cdef double cost = 0.
+    cdef double cost
     cdef np.ndarray x_
     cdef object func, args, kwargs
     cdef np.npy_intp n = param_num[0]
     cdef void** data = <void**>opts.Asa_Data_Ptr
 
-    # asa() calls several times after we have set this
     if opts.Immediate_Exit:
+        # c_asa() calls several times after we have set this
         return 0.
 
     func = <object>data[0]
@@ -245,11 +248,14 @@ cdef double cost_function(double *x, double *xmin, double *xmax,
     #xmax_ = np.PyArray_SimpleNewFromData(1, &n, np.NPY_DOUBLE, xmax)
 
     try:
-        return func(x_, *args, **kwargs)
+        cost = func(x_, *args, **kwargs)
+        cost_flag[0] = True
+        return cost
     except CostParameterError:
         cost_flag[0] = False
         return 0.
     except:
+        # catch all exceptions, save them and have asa() resurrect them
         exc_info = sys.exc_info()
         data[3] = <void*>exc_info
         Py_INCREF(exc_info)
