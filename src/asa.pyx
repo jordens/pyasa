@@ -16,6 +16,7 @@ from asa_def cimport *
 
 np.import_array()
 
+
 asa_codes = {
 
     NORMAL_EXIT: """Given the criteria set, the search has run its
@@ -34,11 +35,11 @@ asa_codes = {
 
     TOO_MANY_INVALID_STATES: """Too many repetitive generated states
     were invalid using the set criteria. A result of raising
-    CostParameterError, to include constraints.""",
+    CostParameterError to include constraints.""",
 
     IMMEDIATE_EXIT: """The user has set OPTIONS−>Immediate_Exit to TRUE,
-    or deleted file asa_exit_anytime when ASA_EXIT_ANYTIME is
-    TRUE. (will not happen, converted to exception)""",
+    or deleted file asa_exit_anytime when ASA_EXIT_ANYTIME is TRUE. This
+    should not happen as it is converted to an exception.""",
 
     INVALID_USER_INPUT: """The user has introduced invalid input. When
     entering asa(), a function asa_test_asa_options() checks out many
@@ -119,30 +120,30 @@ def asa(object func not None,
         Cost/merit function to minimize. Call signature:
             func(x, *args, **kwargs)
         Must return a float.
-        Should raise CostParameterError if the parameters are invalid.
-        All other exceptions raised lead to termination of the 
+        Should raise CostParameterError if the parameters passed
+        are invalid. All other exceptions lead to termination of the 
         optimization (see ASA IMMEDIATE_EXIT option [3]_).
     x0 : (N,) ndarray
-        Initial parameters
+        Initial parameters. This array is clobbered.
     xmin : (N,) ndarray
         Minimally allowed values for parameters
     xmin : (N,) ndarray
         Maximally allowed values for parameters
     full_output : bool, optional
-        return more information on completion (not just the final 
-        parameter values)
+        If True, return more information on completion,
+        otherwise return only the final parameter values. See below.
     args : tuple, optional
-        additional positional arguments to pass to `func()`
+        Additional positional arguments to pass to `func()`
     kwargs : dict, optional
-        additional keyword arguments to pass to `func()`
+        Additional keyword arguments to pass to `func()`
     parameter_type : (N,) ndarray, optional
-        array of type flags for each parameter:
+        Array of type flags for each parameter:
             -1: REAL, -2: REAL_NO_REANNEAL
             1: INTEGER, 2: INTEGER_NO_REANNEAL
 
     Returns
     --------
-    x0 : (N,) ndarray
+    x : (N,) ndarray
         final parameter values
     f0 : float
         final cost value
@@ -154,28 +155,28 @@ def asa(object func not None,
 
     Other Parameters
     ----------------
-    See [3]_ for a detailed explanation.
+    All optional. See [3]_ for an explanation.
 
-    rand_seed : long (696969), optional
-    limit_acceptances : int (1000), optional
-    limit_generated : int (99999), optional
-    limit_invalid_generated_states : int (1000), optional
-    accepted_to_generated_ratio : double (1e-4), optional
-    cost_precision : double (1e-18), optional
-    maximum_cost_repeat : int (5), optional
-    number_cost_samples : int (5), optional
-    temperature_ratio_scale : double (1e-5), optional
-    cost_parameter_scale_ratio : double (1.), optional
-    temperature_anneal_scale : double (100.), optional 
-    include_integer_parameters : int (False), optional
-    user_initial_parameters : int (False), optional
-    sequential_parameters : int (-1), optional
-    initial_parameter_temperature : double (1.), optional
-    acceptance_frequency_modulus : int (100), optional
-    generated_frequency_modulus : int (10000), optional
-    reanneal_cost : int (1), optional
-    reanneal_parameters : int (1), optional
-    delta_x : double (1e-3), optional
+    rand_seed : long : 696969
+    limit_acceptances : int : 1000
+    limit_generated : int : 99999
+    limit_invalid_generated_states : int : 1000
+    accepted_to_generated_ratio : double : 1e-4
+    cost_precision : double : 1e-18
+    maximum_cost_repeat : int : 5
+    number_cost_samples : int : 5
+    temperature_ratio_scale : double : 1e-5
+    cost_parameter_scale_ratio : double : 1.
+    temperature_anneal_scale : double : 100. 
+    include_integer_parameters : int : False
+    user_initial_parameters : int : False
+    sequential_parameters : int : -1
+    initial_parameter_temperature : double : 1.
+    acceptance_frequency_modulus : int : 100
+    generated_frequency_modulus : int : 10000
+    reanneal_cost : int : 1
+    reanneal_parameters : int : 1
+    delta_x : double : 1e-3
 
     Notes
     -----
@@ -189,7 +190,7 @@ def asa(object func not None,
 
     References
     ----------
-    For a detailed description of the algorithm, documentation of options
+    For a description of the algorithm, documentation of options
     and tuning, see:
 
     .. [1] L. Ingber, Adaptive Simulated Annealing (ASA),
@@ -292,8 +293,7 @@ def asa(object func not None,
             exc_info = <object>data[3]
             Py_DECREF(exc_info)
             raise exc_info[0], exc_info[1], exc_info[2]
-        else:
-            raise SystemError("asa(): IMMEDIATE_EXIT without info")
+        raise SystemError("asa(): IMMEDIATE_EXIT without info")
     if full_output:
         return x0, f0, exit_code, asa_opts
     else:
