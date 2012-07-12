@@ -270,7 +270,7 @@ def asa(object func not None,
     opts.Asa_Recursive_Level = 0
 
     opts.Asa_Data_Ptr = data
-    opts.Asa_Data_Dim_Ptr = 4
+    opts.Asa_Data_Dim_Ptr = 1
 
     opts.Immediate_Exit = False
 
