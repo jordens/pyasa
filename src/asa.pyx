@@ -289,11 +289,10 @@ def asa(object func not None,
             )
 
     if exit_code == IMMEDIATE_EXIT:
-        if data[3] != NULL:
-            exc_info = <object>data[3]
-            Py_DECREF(exc_info)
-            raise exc_info[0], exc_info[1], exc_info[2]
-        raise SystemError("asa(): IMMEDIATE_EXIT without info")
+        assert data[3] != NULL, "asa(): IMMEDIATE_EXIT without info"
+        exc_info = <object>data[3]
+        Py_DECREF(exc_info)
+        raise exc_info[0], exc_info[1], exc_info[2]
     if full_output:
         return x0, f0, exit_code, asa_opts
     else:
