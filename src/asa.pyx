@@ -106,7 +106,7 @@ def asa(object func not None,
         int reanneal_cost=1,
         int reanneal_parameters=1,
         double delta_x=1e-3, 
-        bytes asa_out_file=b"STDOUT",
+        bytes asa_out_file=b"/dev/null",
         ):
     """Adaptive Simulated Annealing
 
@@ -177,7 +177,7 @@ def asa(object func not None,
     reanneal_cost : int : 1
     reanneal_parameters : int : 1
     delta_x : double : 1e-3
-    asa_out_file : str : "STDOUT"
+    asa_out_file : str : "/dev/null"
 
     Notes
     -----
