@@ -55,7 +55,7 @@ cdef extern from "asa_usr_asa.h":
         void * Asa_Data_Ptr
 
         #if USER_ASA_OUT
-        #char *Asa_Out_File
+        char *Asa_Out_File
         #endif
         int Asa_Recursive_Level
 

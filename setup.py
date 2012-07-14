@@ -31,7 +31,7 @@ setup(
         define_macros = [("ASA_LIB", "1"),
                          ("OPTIONAL_DATA_PTR", "1"),
                          ("USER_TYPE", "void *"),
-                         #("USER_ASA_OUT", "1"),
+                         ("USER_ASA_OUT", "1"),
                          #("ASA_PRINT", "1"),
                          #("ASA_PRINT_MORE", "1"),
                          ],
