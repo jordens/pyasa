@@ -7,7 +7,7 @@ cdef extern from "asa_usr_asa.h":
     ctypedef int BOOL
     ctypedef int ALLOC_INT
     ctypedef long LONG_INT
-    cdef struct _USER_DEFINES:
+    ctypedef struct USER_DEFINES:
         LONG_INT Limit_Acceptances
         LONG_INT Limit_Generated
         int Limit_Invalid_Generated_States
@@ -57,9 +57,23 @@ cdef extern from "asa_usr_asa.h":
         #if USER_ASA_OUT
         char *Asa_Out_File
         #endif
-        int Asa_Recursive_Level
 
-    ctypedef _USER_DEFINES USER_DEFINES
+        #if USER_ACCEPTANCE_TEST
+        #void (*Acceptance_Test) (double cost,
+        #                         double *parameter_minimum,
+        #                         double *parameter_maximum,
+        #                         ALLOC_INT * number_parameters,
+        #                         const void *OPTIONS_TMP)
+        #int User_Acceptance_Flag
+        #int Cost_Acceptance_Flag
+        #double Cost_Temp_Curr
+        #double Cost_Temp_Init
+        #double Cost_Temp_Scale
+        #double Prob_Bias
+        #LONG_INT *Random_Seed
+        #endif
+
+        int Asa_Recursive_Level
 
 
 cdef extern from "asa_rand.h":

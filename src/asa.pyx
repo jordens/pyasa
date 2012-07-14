@@ -224,6 +224,7 @@ def asa(object func not None,
     [ 0.01467097  0.02876664  0.02477989 -0.03838191] 0.0 2
     >>> print opts["n_accepted"], opts["n_generated"]
     335 3680
+
     """
     cdef USER_DEFINES opts
     cdef LONG_INT seed=rand_seed
