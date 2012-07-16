@@ -73,6 +73,13 @@ cdef extern from "asa_usr_asa.h":
         #LONG_INT *Random_Seed
         #endif
 
+	#if ASA_SAMPLE
+	#double Bias_Acceptance
+	#double *Bias_Generated
+    	#double Average_Weights
+    	#double Limit_Weights
+	#endif
+
         int Asa_Recursive_Level
 
 
