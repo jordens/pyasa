@@ -145,6 +145,9 @@ def asa(object func not None,
     --------
     x : (N,) ndarray
         final parameter values
+
+    Returned only if full_output == True:
+
     f0 : float
         final cost value
     exit_code : int
@@ -209,6 +212,7 @@ def asa(object func not None,
     Examples
     --------
     The ASA test example [4]_:
+
     >>> s, t, c = .2, .05, .15
     >>> d = np.array([1., 1000., 10., 100.])
     >>> def cost(x):
