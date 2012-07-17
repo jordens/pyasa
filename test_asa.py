@@ -29,3 +29,14 @@ print asa.asa(cost, x0, -xmax, xmax, full_output=True)
 #        asa.asa(cost, x0, -xmax, xmax, full_output=True)
 #    except Exception:
 #        pass
+
+
+d = np.arange(5.)
+def cost(x):
+    return -(np.sin(1./(x-d))*np.exp(-(x-d)**2)).sum()
+x0 = -d
+xmax = 1e1*np.ones_like(x0)
+
+print asa.asa(cost, x0, -xmax, xmax, full_output=True)
+
+

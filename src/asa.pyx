@@ -229,6 +229,22 @@ def asa(object func not None,
     >>> print opts["n_accepted"], opts["n_generated"]
     335 3680
 
+    An impossible problem:
+    cost(x) has arbitrarily many successivly better minima the closer x
+    gets to d. The global optimum is at x==d with cost -n
+
+    >>> n = 5.
+    >>> d = np.arange(n)
+    >>> def cost(x):
+    ...     return -(np.sin(1./(x-d))*np.exp(-(x-d)**2)).sum()
+    >>> x0 = -d
+    >>> xmax = 1e1*np.ones_like(x0)
+    >>> x, f, err, opts = asa(cost, x0, -xmax, xmax, full_output=True)
+    >>> print x, f, err # optimal parameters, cost, asa_code
+    [ 0.01116872  0.94212631  2.00478662  3.0056338   4.00584055] -4.99644262369 1
+    >>> print opts["n_accepted"], opts["n_generated"]
+    661 60972
+
     """
     cdef USER_DEFINES opts
     cdef LONG_INT seed=rand_seed
