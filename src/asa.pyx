@@ -79,13 +79,13 @@ class CostParameterError(Exception):
 
 
 def asa(object func not None,
-        np.ndarray[np.double_t, ndim=1] x0 not None,
-        np.ndarray[np.double_t, ndim=1] xmin not None,
-        np.ndarray[np.double_t, ndim=1] xmax not None,
+        np.ndarray[np.double_t, ndim=1, mode="c"] x0 not None,
+        np.ndarray[np.double_t, ndim=1, mode="c"] xmin not None,
+        np.ndarray[np.double_t, ndim=1, mode="c"] xmax not None,
         int full_output=False,
         tuple args=(),
         dict kwargs={},
-        np.ndarray[np.int_t, ndim=1] parameter_type=None,
+        np.ndarray[np.int_t, ndim=1, mode="c"] parameter_type=None,
         long rand_seed=696969,
         int limit_acceptances=1000,
         int limit_generated=99999,
@@ -231,8 +231,8 @@ def asa(object func not None,
     cdef int exit_code=0, cost_flag=1
     cdef int n=x0.shape[0]
     cdef ALLOC_INT param_num=n
-    cdef np.ndarray curve=np.zeros([n, n], dtype=np.double)
-    cdef np.ndarray tang=np.zeros([n], dtype=np.double)
+    cdef np.ndarray[np.double_t, ndim=2, mode="c"] curve
+    cdef np.ndarray[np.double_t, ndim=1, mode="c"] tang
     cdef double f0
     cdef void* data[4]
 
@@ -240,6 +240,9 @@ def asa(object func not None,
     data[1] = <void*>args
     data[2] = <void*>kwargs
     data[3] = NULL # exc_info here
+
+    curve = np.zeros([n, n], dtype=np.double)
+    tang = np.zeros([n], dtype=np.double)
 
     if parameter_type is None:
         parameter_type = -np.ones([n], dtype=np.int)
@@ -280,9 +283,9 @@ def asa(object func not None,
     resettable_randflt(&seed, 1)
 
     f0 = c_asa(cost_function, randflt, &seed,
-            <double*>x0.data, <double*>xmin.data, <double*>xmax.data,
-            <double*>tang.data, <double*>curve.data,
-            &param_num, <int *>parameter_type.data,
+            &x0[0], &xmin[0], &xmax[0],
+            &tang[0], &curve[0,0],
+            &param_num, <int*>&parameter_type[0],
             &cost_flag, &exit_code, &opts)
 
     asa_opts = dict(
