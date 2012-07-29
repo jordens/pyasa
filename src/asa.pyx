@@ -120,15 +120,15 @@ def asa(object func not None,
         Cost/merit function to minimize. Call signature:
             func(x, *args, **kwargs)
         Must return a float.
-        Should raise CostParameterError if the parameters passed
-        are invalid. All other exceptions lead to termination of the 
-        optimization (see ASA IMMEDIATE_EXIT option [3]_).
+        Can raise `CostParameterError` if the parameters passed are
+        invalid (beyond `xmin` and `xmax`). All other exceptions lead to
+        termination of the optimization (see ASA IMMEDIATE_EXIT in [3]_).
     x0 : (N,) ndarray
         Initial parameters. This array is clobbered.
     xmin : (N,) ndarray
-        Minimally allowed values for parameters
-    xmin : (N,) ndarray
-        Maximally allowed values for parameters
+        Lower bounds for parameters
+    xmax : (N,) ndarray
+        Upper bounds for parameters
     full_output : bool, optional
         If True, return more information on completion,
         otherwise return only the final parameter values. See below.
@@ -236,7 +236,7 @@ def asa(object func not None,
     >>> n = 5.
     >>> d = np.arange(n)
     >>> def cost(x):
-    ...     return -(np.sin(1./(x-d))*np.exp(-(x-d)**2)).sum()
+    ...     return -(np.sin(1/(x-d))*np.exp(-(x-d)**2)).sum()
     >>> x0 = -d
     >>> xmax = 1e1*np.ones_like(x0)
     >>> x, f, err, opts = asa(cost, x0, -xmax, xmax, full_output=True)
