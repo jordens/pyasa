@@ -15,7 +15,7 @@ def cost(x):
     k = np.rint(x/s)
     r = np.fabs(k*s-x)
     p = np.sign(k)
-    q = np.where(r<t, c*(p*p*k*s-p*t)**2, x**2)
+    q = np.where(r<t, c*(k*s-p*t)**2, x**2)
     return (d*q).sum()
 
 x0 = np.array([999., -1007, 1001, -903])
