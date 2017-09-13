@@ -22,7 +22,7 @@ setup(
     version="0.4+dev",
     author="Robert Jordens",
     author_email="jordens@gmail.com",
-    url="http://launchpad.net/pyasa",
+    url="https://github.com/jordens/pyasa",
     license="modified BSD",
     install_requires=["numpy"],
     #packages=["asa"],
