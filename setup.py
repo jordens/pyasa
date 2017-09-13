@@ -19,7 +19,7 @@ setup(
     description="Adaptive Simulated Annealing",
     long_description= """Python bindings for the ASA code from 
     http://www.ingber.com/#ASA""",
-    version="0.4+dev",
+    version="0.5",
     author="Robert Jordens",
     author_email="jordens@gmail.com",
     url="https://github.com/jordens/pyasa",
