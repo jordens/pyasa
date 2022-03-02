@@ -1,11 +1,11 @@
 /***********************************************************************
 * Adaptive Simulated Annealing (ASA)
-* Lester Ingber <ingber@ingber.com>
-* Copyright (c) 1987-2012 Lester Ingber.  All Rights Reserved.
-* The ASA-LICENSE file must be included with ASA code.
+* Lester Ingber <lester@ingber.com>
+* Copyright (c) 1987-2021 Lester Ingber.  All Rights Reserved.
+* ASA-LICENSE file has the license that must be included with ASA code.
 ***********************************************************************/
 
-$Id: ASA-CHANGES,v 28.12 2012/07/02 23:58:46 ingber Exp ingber $
+$Id: ASA-CHANGES,v 30.43 2021/01/01 16:54:00 ingber Exp ingber $
 
 ========================================================================
 			CONTENTS
@@ -15,6 +15,328 @@ $Id: ASA-CHANGES,v 28.12 2012/07/02 23:58:46 ingber Exp ingber $
 		@@VERSION DATES
 ========================================================================
 		@@CHANGES
+========================================================================
+========================================================================
+31 Dec 20
+Add added test to FITLOC:
+if ((fabs (floc - fsave) < (double) EPS_DOUBLE) ||
+    (floc < MAX_DOUBLE) || (floc > MIN_DOUBLE) || ((floc) != (floc)))
+
+========================================================================
+28 Dec 20
+Updated Copyright 2021 notices.
+
+========================================================================
+4 Sep 20
+asa_usr.c
+ASA_BYPASS has been added to simply bypass asa().  At the top of asa_usr.c
+the trigger is
+#ifndef ASA_BYPASS
+#define ASA_BYPASS FALSE
+#endif
+which can be simply changed.  This can be useful to debug codes, to run
+the FITLOC simplex code after a good region is developed using asa(),
+etc. A nominal value of cost_value of 10000 has been set, which can
+easily be changed.
+
+========================================================================
+21 Aug 20
+asa.c
+Added
+ALLOC_INT number_parameters_eff[1];
+to print out effective number of parameters using
+fabs(parameter_minimum[index_v] - parameter_maximum[index_v]
+when ASA_PRINT is TRUE, just above print-out for *number_parameters.
+
+asa_usr.c
+Corrected 2 instances of FITCoarse_Resolution in fitloc().
+
+========================================================================
+25 Jul 20
+asa.c
+Add "\n" to several "invalid" lines.
+
+========================================================================
+22 Jun 20
+asa_usr.c
+Corrected extra assignment of FITCoarse_Resolution when FITLOC is TRUE.
+
+========================================================================
+8 Jun 20
+
+asa_usr.c
+Modified FITLOC to pack all parameters with parameter_upper_bound[]
+not equal to parameter_lower_bound[] (used to quickly exclude some
+parameters from optimization) into FIT variables.  Otherwise the
+simplex() code will include these in its optimization.
+
+The same was done for SELF_OPTIMIZE variables.
+
+========================================================================
+6 Jun 20
+
+asa.c, ASA-README.ms
+Added -1 to test for TOO_MANY_INVALID_STATES, so that this test is
+ignored if Limit_Invalid_Generated_States is set to -1.
+
+========================================================================
+2 Jan 20
+
+ASA-README.ms
+Changed
+Lester Ingber Research (LIR)
+to
+Physical Studies Institute (PSI)
+which is a DBA/ABN for
+Physical Studies Institute LLC .
+
+========================================================================
+31 Dec 19
+
+ASA-README.ms
+Brought ASA references up to date.
+
+Updated Copyright 2020 notices.
+
+========================================================================
+6 Sep 19
+
+ASA-README.ms
+Changes in Caltech server means https://alumni.caltech.edu changes back
+to https://alumnus.caltech.edu throughout
+
+========================================================================
+5 Jan 19
+asa.c asa.h asa_usr.c asa_usr.h asa_usr_asa.h
+Changed some casts and placement of definitions to ensure that ASA
+compiles and runs without error or warnings under g++ as well as
+under gcc.
+
+========================================================================
+24 Dec 18
+ASA-README.ms, asa.c, asa_usr_asa.h
+The default to exit ASA when an invalid cost function was calculated,
+giving an exit code of 8 to report an INVALID_COST_FUNCTION, has been
+replaced by an OPTIONS to reject the cost function as invalid, adding to
+the count of *number_invalid in the asa_out file, which can exit subject
+to the OPTIONS Limit_Invalid_Generated_States.  Sometimes only a small
+percentage of generated states has parameters that cause this condition,
+and this is a reasonable way of continuing the sampling.
+
+When noEXIT_INVALID_COST_FUNCTION is set to FALSE, then the previous
+conditions are enforced, and ASA exits whenever an improper cost function
+is calculated.
+
+All files:
+Updated Copyright 2019 notices.
+
+========================================================================
+17 Nov 18
+
+ASA-README.ms
+Changes in Caltech server means https://alumnus.caltech.edu changes back
+to https://alumni.caltech.edu throughout
+
+========================================================================
+23 Oct 18
+
+ASA-README.ms
+Changed https://alumni.caltech.edu to https://alumnus.caltech.edu throughout
+
+========================================================================
+23 Sep 18
+
+ASA-Makefile
+Under "run:" replaced default "asa_run" with "./asa_run" since for
+security some systems do not have "." in their default path.
+Changed default CDEBUGFLAGS line by commenting out "-ffloat-store"
+option to gcc.
+
+ASA-README.ms
+Changed http: to https: throughout
+
+========================================================================
+31 Aug 18
+
+Updated references and mirrors.
+
+========================================================================
+20 Nov 17
+
+changed all https://alumni.caltech.edu to http://alumni.caltech.edu
+
+========================================================================
+21 Oct 16
+
+changed all http://ingber.com references to https://www.ingber.com
+
+========================================================================
+23 Oct 15
+
+asa.c
+Fixed bug that prevented description line being inserted into
+asa_exit_anytime when ASA_EXIT_ANYTIME is TRUE.
+
+========================================================================
+12 Oct 15
+
+ASA-README.ms
+Included reference to SSL WWW https:// pages.
+
+========================================================================
+24 Mar 15
+
+ASA-README.ms
+Converted a line of ISO-8859 font into UTF-8.
+
+========================================================================
+15 Jan 15
+
+ASA-NOTES
+Added to Section @@Equality and Inequality Constraints information on
+paper by Hime Aguiar and colleagues addressing use of equality constraints
+in ASA when inverse mappings of the equality space can be calculated.
+
+========================================================================
+7 Jan 15
+
+ASA-README.ms
+Updated references.
+
+========================================================================
+11 Oct 14
+
+asa.c
+Deleted unused parallel_id not in struct.
+
+ASA-Makefile, ASA-README.ms, asa.c, asa_usr.c
+Added print to asa_usr_out when ASA_FUZZY_PRINT is TRUE, from
+FuzzyControl() and/or AlterQuench().
+
+========================================================================
+28 Jul 14
+
+ASA-README.ms, asa.c, asa_usr_asa.h
+Added OPTIONS->parallel_id to be available when ASA_PARALLEL is TRUE,
+just before the call to user_cost_function().
+
+========================================================================
+8 Apr 14
+
+ASA-README.ms, asa_usr.c asa_usr.h
+Added code to restore regular annealing schedules under some conditions
+when ASA_FUZZY is TRUE:
+*ASA_FUZZY_Init_User_Quench_Cost_Scale
+*ASA_FUZZY_Init_User_Quench_Param_Scale
+
+========================================================================
+21 Jan 14
+
+asa.c, ASA-README.ms
+When ASA_PARALLEL is TRUE, the do loop around generated states that
+tests for invalid states is taken over, not within, blocks of parallel
+generated states.
+
+========================================================================
+19 Jan 14
+
+asa.c, asa.h, asa_usr.c, ASA-README.ms
+Corrected and cleaned up some ASA_PARALLEL code.
+
+========================================================================
+6 Jan 14
+
+asa.c
+Cleaned up ASA_PARALLEL loop.
+
+========================================================================
+2 Jan 14
+
+ASA-Makefile, ASA-README.ms, asa.c, asa.h, asa_usr.c, asa_usr_asa.h
+Set up ASA to run OpenMP with ASA_PARALLEL.
+
+========================================================================
+24 Oct 13
+
+ASA-README.ms
+Updated references.
+
+========================================================================
+19 Oct 13
+
+asa.c, ASA-README.ms
+In the cost function, when User_Tangents is TRUE, the user should
+test the incoming *cost_flag for a value of -1 (changed from FALSE) to
+calculate tangents.  If ASA_QUEUE is TRUE, then the value of *cost_flag
+is tested for FALSE in previous states in queue and an invalid statement
+is available in the printout.
+
+========================================================================
+25 Sep 13
+
+ASA-Makefile, ASA-README.ms
+Since -mno-cygwin has been deprecated in Cygwin, there are comments to
+use i686-pc-mingw32-gcc.exe, e.g.,
+CC = /bin/i686-pc-mingw32-gcc.exe
+to not use the cygwin1.dll library.
+
+========================================================================
+13 Sep 13
+
+All files
+All references to the ASA-LICENSE have been changed to reflect that the
+information in the ASA-LICENSE file must be included with the ASA code,
+not necessarily the file itself.
+
+========================================================================
+12 Sep 13
+
+ASA-LICENSE, ASA-README.ms
+The ASA-LICENSE has been replaced with a BSD 3-Clause License, as posted
+on http://opensource.org/licenses/BSD-3-Clause .
+
+========================================================================
+13 Jun 13
+
+ASA-README.ms
+Updated references.
+
+========================================================================
+8 Apr 13
+
+asa.c
+Added existence test for "asa_exit_anytime".
+
+========================================================================
+2 Apr 13
+
+asa.c, asa_usr.c, asa_usr_asa.h, ASA-Makefile
+When USER_ASA_USR_OUT is TRUE, the user must define
+OPTIONS->Asa_Out_Usr_File to override the USER_OUT default of asa_out.
+
+========================================================================
+24 Mar 13
+
+asa.c
+moved fflush() and fclose() out of TIME_CALC section.
+
+asa_usr.c
+Under fitloc() and calcf(), moved some ASA_RESOLUTION variables under
+FITLOC_ROUND to avoid warnings of not used when FITLOC_ROUND is FALSE.
+
+asa_usr_cst.c, asa_usr.c
+When ASA_TEST is TRUE, removed parameter_upper_bound-parameter_lower_bound tests.
+
+ASA-NOTES:
+Section, @@Options for Large Spaces, changed a Program Option to
+increase Temperature_Ratio_Scale (smaller negative exponent)
+
+========================================================================
+7 Aug 12
+
+ASA-README.html
+Fixed typos and obsolete links.
+
 ========================================================================
 2 Jul 12
 
@@ -4917,6 +5239,59 @@ Zening Ge		<zg11@midway.uchicago.edu>
 		@@VERSION DATES
 ========================================================================
 * Modification History:
+*	01 Jan 21:	Version	30.43
+*	27 Dec 20:	Version	30.42
+*	27 Dec 20:	Version	30.41
+*	04 Sep 20:	Version	30.40
+*	22 Aug 20:	Version	30.39
+*	25 Jul 20:	Version	30.38
+*	22 Jun 20:	Version	30.37
+*	08 Jun 20:	Version	30.36
+*	08 Jun 20:	Version	30.35
+*	06 Jun 20:	Version	30.34
+*	25 Feb 20:	Version	30.33
+*	25 Jan 20:	Version	30.32
+*	05 Jan 20:	Version	30.31
+*	31 Dec 19:	Version	30.30
+*	07 Jul 19:	Version	30.29
+*	05 Jan 19:	Version	30.28
+*	05 Jan 19:	Version	30.27
+*	24 Dec 18:	Version	30.26
+*	23 Sep 18:	Version	30.25
+*	31 Aug 18:	Version	30.24
+*	20 Nov 17:	Version	30.23
+*	31 Dec 16:	Version	30.22
+*	02 Feb 16:	Version	30.21
+*	02 Feb 16:	Version	30.20
+*	02 Feb 16:	Version	30.19
+*	27 Jan 15:	Version	30.18
+*	27 Jan 15:	Version	30.17
+*	27 Jan 15:	Version	30.16
+*	11 Oct 14:	Version	30.15
+*	11 Oct 14:	Version	30.14
+*	11 Oct 14:	Version	30.13
+*	11 Oct 14:	Version	30.12
+*	11 Oct 14:	Version	30.11
+*	28 Jul 14:	Version	30.10
+*	28 Jul 14:	Version	30.9
+*	28 Jul 14:	Version	30.8
+*	09 Apr 14:	Version	30.7
+*	21 Jan 14:	Version	30.6
+*	21 Jan 14:	Version	30.5
+*	19 Jan 14:	Version	30.4
+*	06 Jan 14:	Version	30.3
+*	06 Jan 14:	Version	30.2
+*	04 Jan 14:	Version	30.1
+*	19 Oct 13:	Version	29.6
+*	19 Oct 13:	Version	29.5
+*	19 Oct 13:	Version	29.4
+*	13 Sep 13:	Version	29.3
+*	13 Sep 13:	Version	29.2
+*	12 Sep 13:	Version	29.1
+*	12 Sep 13:	Version	28.16
+*	08 Apr 13:	Version	28.15
+*	26 Mar 13:	Version	28.14
+*	07 Aug 12:	Version	28.13
 *	02 Jul 12:	Version	28.12
 *	13 Apr 12:	Version	28.11
 *	11 Apr 12:	Version	28.10

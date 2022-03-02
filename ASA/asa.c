@@ -1,11 +1,11 @@
 /***********************************************************************
 * Adaptive Simulated Annealing (ASA)
-* Lester Ingber <ingber@ingber.com>
-* Copyright (c) 1987-2012 Lester Ingber.  All Rights Reserved.
-* The ASA-LICENSE file must be included with ASA code.
+* Lester Ingber <lester@ingber.com>
+* Copyright (c) 1987-2021 Lester Ingber.  All Rights Reserved.
+* ASA-LICENSE file has the license that must be included with ASA code.
 ***********************************************************************/
 
-#define ASA_ID "/* $Id: asa.c,v 28.12 2012/07/02 23:58:51 ingber Exp ingber $ */"
+#define ASA_ID "/* $Id: asa.c,v 30.43 2021/01/01 16:54:16 ingber Exp ingber $ */"
 
 #include "asa.h"
 
@@ -18,7 +18,6 @@ char exit_msg[160];             /* temp storage for exit messages */
 #if HAVE_ANSI
 double
 asa (double (*user_cost_function)
-
       
      (double *, double *, double *, double *, double *, ALLOC_INT *, int *,
       int *, int *, USER_DEFINES *),
@@ -68,10 +67,12 @@ asa (user_cost_function,
   int index_cost_constraint;    /* index cost functions averaged */
 #endif /* USER_INITIAL_COST_TEMP */
 
+  ALLOC_INT number_parameters_eff[1];
   int index_cost_repeat,        /* test OPTIONS->Cost_Precision when =
                                    OPTIONS->Maximum_Cost_Repeat */
     tmp_var_int, tmp_var_int1, tmp_var_int2;    /* temporary integers */
 
+  int generate_flg;
   ALLOC_INT index_v,            /* iteration index */
    *start_sequence;             /* initial OPTIONS->Sequential_Parameters
                                    used if >= 0 */
@@ -157,7 +158,7 @@ asa (user_cost_function,
   LONG_INT save_queue_indx;     /* current position in queue */
   double *save_queue_cost, *save_queue_param;   /* saved states */
   ALLOC_INT queue_size_tmp;
-#endif
+#endif /* ASA_QUEUE */
 
 #if MULTI_MIN
   int multi_index;
@@ -168,12 +169,31 @@ asa (user_cost_function,
 #endif /* MULTI_MIN */
 
 #if ASA_PARALLEL
+  int EXIT_asa_parallel = 0;
+  LONG_INT tmp_var_lint;
+  LONG_INT *parallel_gen_ratio_block;
   LONG_INT *parallel_sort;
-  LONG_INT index_parallel, sort_index;  /* count of parallel generated states */
-  LONG_INT parallel_generated;  /* saved *recent_number_generated */
-  LONG_INT parallel_block_max;  /* saved OPTIONS->Gener_Block_Max */
+  LONG_INT i_prll, sort_index;  /* count of parallel generated states */
   STATE *gener_block_state;
-#endif
+  int *generate_flg_par;
+  LONG_INT *number_invalid_generated_states_par;
+  LONG_INT *repeated_invalid_states_par;
+  double *tmp_var_db1_par;
+  double *tmp_var_db_par;
+  int *valid_state_generated_flag_par;
+  int valid_state_generated_flag_par_test;
+#if ASA_QUEUE
+  int *queue_new_par;
+  LONG_INT *queue_v_par;
+  LONG_INT *save_queue_indx_par;
+  LONG_INT *save_queue_test_par;
+  LONG_INT *save_queue_par;
+  double *queue_par_cost;
+  int **save_queue_valid_state_flag_par;
+  double **save_queue_cost_par;
+  double **save_queue_param_par;
+#endif /* ASA_QUEUE */
+#endif /* ASA_PARALLEL */
 
   /* used to index repeated and recursive calls to asa */
   /* This assumes that multiple calls (>= 1) _or_ recursive
@@ -184,7 +204,11 @@ asa (user_cost_function,
 
   /* initializations */
 
+  repeated_invalid_states = 0;
   ret1_flg = 0;
+  generate_flg = 0;
+  if (generate_flg != 0)
+    generate_flg = 0;
 
   fscanf_ret = 0;               /* stop compiler warning */
   if (fscanf_ret) {
@@ -343,7 +367,67 @@ asa (user_cost_function,
     *exit_status = CALLOC_FAILED;
     return (-1);
   }
-#endif
+
+  if ((generate_flg_par =
+       (int *) calloc (OPTIONS->Gener_Block_Max, sizeof (int))) == NULL) {
+    strcpy (exit_msg, "asa(): generate_flg_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((valid_state_generated_flag_par =
+       (int *) calloc (OPTIONS->Gener_Block_Max, sizeof (int))) == NULL) {
+    strcpy (exit_msg, "asa(): valid_state_generated_flag_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((number_invalid_generated_states_par =
+       (LONG_INT *) calloc (OPTIONS->Gener_Block_Max,
+                            sizeof (LONG_INT))) == NULL) {
+    strcpy (exit_msg, "asa(): number_invalid_generated_states_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((repeated_invalid_states_par =
+       (LONG_INT *) calloc (OPTIONS->Gener_Block_Max,
+                            sizeof (LONG_INT))) == NULL) {
+    strcpy (exit_msg, "asa(): repeated_invalid_states_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((tmp_var_db1_par =
+       (double *) calloc (OPTIONS->Gener_Block_Max,
+                          sizeof (double))) == NULL) {
+    strcpy (exit_msg, "asa(): tmp_var_db1_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((tmp_var_db_par =
+       (double *) calloc (OPTIONS->Gener_Block_Max,
+                          sizeof (double))) == NULL) {
+    strcpy (exit_msg, "asa(): tmp_var_db_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+
+  if ((parallel_gen_ratio_block =
+       (LONG_INT *) calloc (OPTIONS->Gener_Mov_Avr,
+                            sizeof (LONG_INT))) == NULL) {
+    strcpy (exit_msg, "asa(): parallel_gen_ratio_block");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+
+  for (i_prll = 0; i_prll < OPTIONS->Gener_Mov_Avr; ++i_prll) {
+    parallel_gen_ratio_block[i_prll] = OPTIONS->Gener_Block;
+  }
+#endif /* ASA_PARALLEL */
 
   fscanf_ret = 0;
 
@@ -515,10 +599,12 @@ asa (user_cost_function,
 #endif /* ASA_PIPE_FILE */
 
 #if ASA_EXIT_ANYTIME
-  ptr_exit_anytime = fopen ("asa_exit_anytime", "w");
-  fprintf (ptr_exit_anytime,
-           "force IMMEDIATE_EXIT by removing this file if ASA_EXIT_ANYTIME is TRUE\n");
-  fclose (ptr_exit_anytime);
+  if ((ptr_exit_anytime = fopen ("asa_exit_anytime", "w")) != NULL) {
+    fprintf (ptr_exit_anytime, "%s\n",
+             "force IMMEDIATE_EXIT by removing this file if ASA_EXIT_ANYTIME is TRUE");
+    fflush (ptr_exit_anytime);
+    fclose (ptr_exit_anytime);
+  }
 #endif /* ASA_EXIT_ANYTIME */
 
 #if ASA_PRINT
@@ -578,21 +664,20 @@ asa (user_cost_function,
     goto RET1_asa;
   }
 #if ASA_PARALLEL
-  parallel_block_max = OPTIONS->Gener_Block_Max;
-  parallel_generated = OPTIONS->Gener_Block;
-
-  for (index_parallel = 0; index_parallel < parallel_block_max;
-       ++index_parallel) {
-    if ((gener_block_state[index_parallel].parameter =
+  for (i_prll = 0; i_prll < OPTIONS->Gener_Block_Max; ++i_prll) {
+    if ((gener_block_state[i_prll].parameter =
          (double *) calloc (*number_parameters, sizeof (double))) == NULL) {
-      strcpy (exit_msg, "asa(): gener_block_state[index_parallel].parameter");
+      strcpy (exit_msg, "asa(): gener_block_state[i_prll].parameter");
       Exit_ASA (exit_msg);
       *exit_status = CALLOC_FAILED;
       ret1_flg = 1;
       goto RET1_asa;
+    } else {
+      ;
     }
   }
-#endif
+  OPTIONS->parallel_id = -1;
+#endif /* ASA_PARALLEL */
 
   OPTIONS->Best_Cost = &(best_generated_state->cost);
   OPTIONS->Best_Parameters = best_generated_state->parameter;
@@ -664,7 +749,6 @@ asa (user_cost_function,
     strcpy (exit_msg, "asa(): save_queue_cost");
     Exit_ASA (exit_msg);
     *exit_status = CALLOC_FAILED;
-    free (save_queue_flag);
     return (-1);
   }
   if ((save_queue_param =
@@ -673,10 +757,111 @@ asa (user_cost_function,
     strcpy (exit_msg, "asa(): save_queue_param");
     Exit_ASA (exit_msg);
     *exit_status = CALLOC_FAILED;
-    free (save_queue_cost);
-    free (save_queue_flag);
     return (-1);
   }
+#if ASA_PARALLEL
+  if (OPTIONS->Queue_Size > 0) {
+    queue_size_tmp = OPTIONS->Queue_Size;
+  } else {
+    queue_size_tmp = 1;
+  }
+
+  if ((queue_par_cost =
+       (double *) calloc (OPTIONS->Gener_Block_Max,
+                          sizeof (double))) == NULL) {
+    strcpy (exit_msg, "asa(): queue_par_cost");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((queue_new_par =
+       (int *) calloc (OPTIONS->Gener_Block_Max, sizeof (int))) == NULL) {
+    strcpy (exit_msg, "asa(): queue_new_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((queue_v_par =
+       (LONG_INT *) calloc (OPTIONS->Gener_Block_Max,
+                            sizeof (LONG_INT))) == NULL) {
+    strcpy (exit_msg, "asa(): queue_v_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((save_queue_indx_par =
+       (LONG_INT *) calloc (OPTIONS->Gener_Block_Max,
+                            sizeof (LONG_INT))) == NULL) {
+    strcpy (exit_msg, "asa(): save_queue_indx_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((save_queue_test_par =
+       (LONG_INT *) calloc (OPTIONS->Gener_Block_Max,
+                            sizeof (LONG_INT))) == NULL) {
+    strcpy (exit_msg, "asa(): save_queue_test_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((save_queue_par =
+       (LONG_INT *) calloc (OPTIONS->Gener_Block_Max,
+                            sizeof (LONG_INT))) == NULL) {
+    strcpy (exit_msg, "asa(): save_queue_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+
+  if ((save_queue_valid_state_flag_par =
+       (int **) calloc (OPTIONS->Gener_Block_Max, sizeof (int *))) == NULL) {
+    strcpy (exit_msg, "asa(): *save_queue_valid_state_flag_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((save_queue_cost_par =
+       (double **) calloc (OPTIONS->Gener_Block_Max,
+                           sizeof (double *))) == NULL) {
+    strcpy (exit_msg, "asa(): *save_queue_cost_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  if ((save_queue_param_par =
+       (double **) calloc (OPTIONS->Gener_Block_Max,
+                           sizeof (double *))) == NULL) {
+    strcpy (exit_msg, "asa(): *save_queue_param_par");
+    Exit_ASA (exit_msg);
+    *exit_status = CALLOC_FAILED;
+    return (-1);
+  }
+  for (i_prll = 0; i_prll < OPTIONS->Gener_Block_Max; ++i_prll) {
+    if ((save_queue_valid_state_flag_par[i_prll] =
+         (int *) calloc (queue_size_tmp, sizeof (int))) == NULL) {
+      strcpy (exit_msg, "asa(): save_queue_valid_state_flag_par[i_prll]");
+      Exit_ASA (exit_msg);
+      *exit_status = CALLOC_FAILED;
+      return (-1);
+    }
+    if ((save_queue_cost_par[i_prll] =
+         (double *) calloc (queue_size_tmp, sizeof (double))) == NULL) {
+      strcpy (exit_msg, "asa(): save_queue_cost_par[i_prll]");
+      Exit_ASA (exit_msg);
+      *exit_status = CALLOC_FAILED;
+      return (-1);
+    }
+    if ((save_queue_param_par[i_prll] =
+         (double *) calloc ((*number_parameters) * queue_size_tmp,
+                            sizeof (double))) == NULL) {
+      strcpy (exit_msg, "asa(): save_queue_param_par[i_prll]");
+      Exit_ASA (exit_msg);
+      *exit_status = CALLOC_FAILED;
+      return (-1);
+    }
+  }
+#endif /* ASA_PARALLEL */
 #endif /* ASA_QUEUE */
 
 #if MULTI_MIN
@@ -704,7 +889,6 @@ asa (user_cost_function,
     strcpy (exit_msg, "asa(): *multi_params");
     Exit_ASA (exit_msg);
     *exit_status = CALLOC_FAILED;
-    free (multi_sort);
     ret1_flg = 1;
     goto RET1_asa;
   }
@@ -714,7 +898,6 @@ asa (user_cost_function,
       strcpy (exit_msg, "asa(): multi_params[multi_index]");
       Exit_ASA (exit_msg);
       *exit_status = CALLOC_FAILED;
-      free (multi_sort);
       ret1_flg = 1;
       goto RET1_asa;
     }
@@ -780,14 +963,28 @@ RET1_asa:
   *start_sequence = OPTIONS->Sequential_Parameters;
 
 #if ASA_PRINT
-  fprintf (ptr_asa_out,
+  number_parameters_eff[0] = 0;
+  VFOR (index_v) {
+    if (fabs (parameter_minimum[index_v] - parameter_maximum[index_v]) <
+        (double) EPS_DOUBLE) {
+      continue;
+    } else {
+      ++(number_parameters_eff[0]);
+    }
+  }
 #if INT_ALLOC
-           "*number_parameters = %d\n\n", *number_parameters);
+  fprintf (ptr_asa_out, "number_parameters_eff = %d\n",
+           number_parameters_eff[0]);
+  fprintf (ptr_asa_out, "*number_parameters = %d\n\n", *number_parameters);
 #else
 #if INT_LONG
-           "*number_parameters = %ld\n\n", *number_parameters);
+  fprintf (ptr_asa_out, "number_parameters_eff = %ld\n",
+           number_parameters_eff[0]);
+  fprintf (ptr_asa_out, "*number_parameters = %ld\n\n", *number_parameters);
 #else
-           "*number_parameters = %d\n\n", *number_parameters);
+  fprintf (ptr_asa_out, "number_parameters_eff = %d\n",
+           number_parameters_eff[0]);
+  fprintf (ptr_asa_out, "*number_parameters = %d\n\n", *number_parameters);
 #endif
 #endif
 
@@ -1087,17 +1284,19 @@ RET1_asa:
       }
 #endif /* ASA_EXIT_ANYTIME */
       ++(*number_invalid_generated_states);
-      generate_new_state (user_random_generator,
-                          seed,
-                          parameter_minimum,
-                          parameter_maximum, current_user_parameter_temp,
+      generate_flg = generate_new_state (user_random_generator,
+                                         seed,
+                                         parameter_minimum,
+                                         parameter_maximum,
+                                         current_user_parameter_temp,
 #if USER_GENERATING_FUNCTION
-                          initial_user_parameter_temp,
-                          temperature_scale_parameters,
+                                         initial_user_parameter_temp,
+                                         temperature_scale_parameters,
 #endif
-                          number_parameters,
-                          parameter_type,
-                          current_generated_state, last_saved_state, OPTIONS);
+                                         number_parameters,
+                                         parameter_type,
+                                         current_generated_state,
+                                         last_saved_state, OPTIONS);
       *valid_state_generated_flag = TRUE;
 #if USER_ACCEPTANCE_TEST
       OPTIONS->User_Acceptance_Flag = TRUE;
@@ -1117,11 +1316,18 @@ RET1_asa:
            parameter_minimum, parameter_maximum, number_parameters,
            xnumber_parameters) == 0) {
         *exit_status = INVALID_COST_FUNCTION;
+#if noEXIT_INVALID_COST_FUNCTION
+        ++repeated_invalid_states;
+        *valid_state_generated_flag = FALSE;
+#else
         goto EXIT_asa;
+#endif /* noEXIT_INVALID_COST_FUNCTION */
       }
 
       ++repeated_invalid_states;
-      if (repeated_invalid_states > OPTIONS->Limit_Invalid_Generated_States) {
+      if ((OPTIONS->Limit_Invalid_Generated_States != -1)
+          && (repeated_invalid_states >
+              OPTIONS->Limit_Invalid_Generated_States)) {
         *exit_status = TOO_MANY_INVALID_STATES;
         goto EXIT_asa;
       }
@@ -1195,7 +1401,12 @@ RET1_asa:
          parameter_minimum, parameter_maximum, number_parameters,
          xnumber_parameters) == 0) {
       *exit_status = INVALID_COST_FUNCTION;
+#if noEXIT_INVALID_COST_FUNCTION
+      ++repeated_invalid_states;
+      *valid_state_generated_flag = FALSE;
+#else
       goto EXIT_asa;
+#endif /* noEXIT_INVALID_COST_FUNCTION */
     }
 #if ASA_PRINT
     if (*valid_state_generated_flag == FALSE)
@@ -1216,17 +1427,19 @@ RET1_asa:
       }
 #endif /* ASA_EXIT_ANYTIME */
       ++(*number_invalid_generated_states);
-      generate_new_state (user_random_generator,
-                          seed,
-                          parameter_minimum,
-                          parameter_maximum, current_user_parameter_temp,
+      generate_flg = generate_new_state (user_random_generator,
+                                         seed,
+                                         parameter_minimum,
+                                         parameter_maximum,
+                                         current_user_parameter_temp,
 #if USER_GENERATING_FUNCTION
-                          initial_user_parameter_temp,
-                          temperature_scale_parameters,
+                                         initial_user_parameter_temp,
+                                         temperature_scale_parameters,
 #endif
-                          number_parameters,
-                          parameter_type,
-                          current_generated_state, last_saved_state, OPTIONS);
+                                         number_parameters,
+                                         parameter_type,
+                                         current_generated_state,
+                                         last_saved_state, OPTIONS);
       *valid_state_generated_flag = TRUE;
 #if USER_ACCEPTANCE_TEST
       OPTIONS->User_Acceptance_Flag = TRUE;
@@ -1246,10 +1459,17 @@ RET1_asa:
            current_generated_state->parameter, parameter_minimum,
            parameter_maximum, number_parameters, xnumber_parameters) == 0) {
         *exit_status = INVALID_COST_FUNCTION;
+#if noEXIT_INVALID_COST_FUNCTION
+        ++repeated_invalid_states;
+        *valid_state_generated_flag = FALSE;
+#else
         goto EXIT_asa;
+#endif /* noEXIT_INVALID_COST_FUNCTION */
       }
       ++repeated_invalid_states;
-      if (repeated_invalid_states > OPTIONS->Limit_Invalid_Generated_States) {
+      if ((OPTIONS->Limit_Invalid_Generated_States != -1)
+          && (repeated_invalid_states >
+              OPTIONS->Limit_Invalid_Generated_States)) {
         *exit_status = TOO_MANY_INVALID_STATES;
         goto EXIT_asa;
       }
@@ -1384,7 +1604,7 @@ RET1_asa:
 #endif /* ASA_PRINT */
 
   /* fill arrays to check allocated memory */
-  for (queue = 0; queue < queue_size_tmp; ++queue) {
+  for (queue = 0; queue < (LONG_INT) queue_size_tmp; ++queue) {
     VFOR (index_v) {
       if (PARAMETER_RANGE_TOO_SMALL (index_v)) {
         continue;
@@ -1396,6 +1616,25 @@ RET1_asa:
     save_queue_flag[queue] = *valid_state_generated_flag;
   }
   save_queue = save_queue_indx = 0;
+#if ASA_PARALLEL
+  for (i_prll = 0; i_prll < OPTIONS->Gener_Block_Max; ++i_prll) {
+    for (queue = 0; queue < (LONG_INT) queue_size_tmp; ++queue) {
+      VFOR (index_v) {
+        if (PARAMETER_RANGE_TOO_SMALL (index_v)) {
+          continue;
+        }
+        queue_v_par[i_prll] =
+          index_v + queue * (LONG_INT) (*number_parameters);
+        save_queue_param_par[i_prll][queue_v_par[i_prll]] =
+          current_generated_state->parameter[index_v];
+      }
+      save_queue_cost_par[i_prll][queue] = current_generated_state->cost;
+      save_queue_valid_state_flag_par[i_prll][queue] =
+        *valid_state_generated_flag;
+    }
+    save_queue_par[i_prll] = save_queue_indx_par[i_prll] = 0;
+  }
+#endif /* ASA_PARALLEL */
 #endif /* ASA_QUEUE */
 
 #if ASA_RESOLUTION
@@ -1414,6 +1653,7 @@ RET1_asa:
              index_v,
              G_FIELD, G_PRECISION, OPTIONS->Coarse_Resolution[index_v]);
   }
+  fflush (ptr_asa_out);
 #endif /* ASA_PRINT */
 #endif /* ASA_RESOLUTION */
 
@@ -1444,7 +1684,12 @@ RET1_asa:
     fflush (ptr_asa_out);
 #endif
     *exit_status = INVALID_COST_FUNCTION;
+#if noEXIT_INVALID_COST_FUNCTION
+    ++repeated_invalid_states;
+    *valid_state_generated_flag = FALSE;
+#else
     goto EXIT_asa;
+#endif /* noEXIT_INVALID_COST_FUNCTION */
   }
 
   OPTIONS->Sequential_Parameters = *start_sequence - 1;
@@ -1724,6 +1969,9 @@ RET1_asa:
 #if USER_ASA_OUT
       fread (OPTIONS->Asa_Out_File, sizeof (char), 80, ptr_save);
 #endif
+#if USER_ASA_USR_OUT
+      fread (OPTIONS->Asa_Usr_Out_File, sizeof (char), 80, ptr_save);
+#endif
 #if USER_COST_SCHEDULE
       fread (&(OPTIONS->Cost_Schedule), sizeof (char), 1, ptr_save);
 #endif
@@ -1731,7 +1979,7 @@ RET1_asa:
       fread (&(OPTIONS->Asymp_Exp_Param), sizeof (double), 1, ptr_save);
 #endif
 #if USER_ACCEPTANCE_TEST
-      fread (&(OPTIONS->Acceptance_Test), sizeof (char), 1, ptr_save);
+      fread (&(OPTIONS->Acceptance_Fit), sizeof (char), 1, ptr_save);
       fread (&(OPTIONS->User_Acceptance_Flag), sizeof (int), 1, ptr_save);
       fread (&(OPTIONS->Cost_Acceptance_Flag), sizeof (int), 1, ptr_save);
       fread (&(OPTIONS->Cost_Temp_Curr), sizeof (double), 1, ptr_save);
@@ -1768,7 +2016,7 @@ RET1_asa:
       fread (OPTIONS->Queue_Resolution, sizeof (double),
              *number_parameters, ptr_save);
 #endif
-#endif
+#endif /* ASA_QUEUE */
 #if ASA_RESOLUTION
       fread (OPTIONS->Coarse_Resolution, sizeof (double),
              *number_parameters, ptr_save);
@@ -1798,27 +2046,24 @@ RET1_asa:
       }
 #endif
 #if ASA_PARALLEL
-      fread (&parallel_generated, sizeof (LONG_INT), 1, ptr_save);
-      fread (&parallel_block_max, sizeof (LONG_INT), 1, ptr_save);
-      for (index_parallel = 0; index_parallel < parallel_block_max;
-           ++index_parallel) {
-        fread (gener_block_state[index_parallel].parameter,
+      for (i_prll = 0; i_prll < OPTIONS->Gener_Block_Max; ++i_prll) {
+        fread (gener_block_state[i_prll].parameter,
                sizeof (double), *number_parameters, ptr_save);
-        fread (&(gener_block_state[index_parallel].cost),
+        fread (&(gener_block_state[i_prll].cost),
                sizeof (double), 1, ptr_save);
 #if USER_ACCEPTANCE_TEST
         fread (&
-               (gener_block_state[index_parallel].par_user_accept_flag),
+               (gener_block_state[i_prll].par_user_accept_flag),
                sizeof (int), 1, ptr_save);
         fread (&
-               (gener_block_state[index_parallel].par_cost_accept_flag),
+               (gener_block_state[i_prll].par_cost_accept_flag),
                sizeof (int), 1, ptr_save);
 #endif
       }
       fread (&(OPTIONS->Gener_Mov_Avr), sizeof (int), 1, ptr_save);
       fread (&(OPTIONS->Gener_Block), sizeof (LONG_INT), 1, ptr_save);
       fread (&(OPTIONS->Gener_Block_Max), sizeof (LONG_INT), 1, ptr_save);
-#endif
+#endif /* ASA_PARALLEL */
 
       fclose (ptr_save);
 
@@ -1968,120 +2213,297 @@ RET1_asa:
     }
 #endif /* ASA_SAVE */
 
+    if (OPTIONS->Locate_Cost < 0) {
+      OPTIONS->Locate_Cost = 12;        /* generate new state from new best */
+    } else {
+      OPTIONS->Locate_Cost = 2; /* generate new state */
+    }
+
+#if USER_ACCEPTANCE_TEST
+    OPTIONS->User_Acceptance_Flag = FALSE;
+    OPTIONS->Cost_Acceptance_Flag = FALSE;
+#endif
+
+#if ASA_EXIT_ANYTIME
+    if ((ptr_exit_anytime = fopen ("asa_exit_anytime", "r")) == NULL) {
+      goto EXIT_asa;
+    } else {
+      fclose (ptr_exit_anytime);
+    }
+#endif /* ASA_EXIT_ANYTIME */
+
     /* GENERATE NEW PARAMETERS */
 
     /* generate a new valid set of parameters */
 #if ASA_PARALLEL
-    /* *** ENTER CODE TO SPAWN OFF PARALLEL GENERATED STATES *** */
+    /* While this section of code is set to run under OpenMP using the gcc
+     * compiler, you may change/add lines of code in this entire ASA_PARALLEL
+     * section to correspond to your choice of parallel algorithm and
+     * compiler. The entire ASA_PARALLEL section makes assignments to indexed
+     * variables to afford flexibility for other such algorithms. */
 
-    /* check if need more memory allocated to gener_block_state */
-    if (OPTIONS->Gener_Block_Max > parallel_block_max) {
-      for (index_parallel = 0; index_parallel < parallel_block_max;
-           ++index_parallel) {
-        free (gener_block_state[index_parallel].parameter);
-      }
-      free (gener_block_state);
+    /* Note that here the do loop around generated states that tests for
+     * invalid states is taken over, not within, blocks of parallel
+     * calculated cost functions for these generated states, below. */
 
-      if ((gener_block_state =
-           (STATE *) calloc (OPTIONS->Gener_Block_Max,
-                             sizeof (STATE))) == NULL) {
-        strcpy (exit_msg, "asa(): gener_block_state");
-        Exit_ASA (exit_msg);
-        *exit_status = CALLOC_FAILED;
-        return (-1);
-      }
-
-      parallel_block_max = OPTIONS->Gener_Block_Max;
-
-      for (index_parallel = 0; index_parallel < parallel_block_max;
-           ++index_parallel) {
-        if ((gener_block_state[index_parallel].parameter =
-             (double *) calloc (*number_parameters,
-                                sizeof (double))) == NULL) {
-          strcpy (exit_msg,
-                  "asa(): gener_block_state[index_parallel].parameter");
-          Exit_ASA (exit_msg);
-          *exit_status = CALLOC_FAILED;
-          return (-1);
-        }
-      }
-    }
-#if ASA_TEMPLATE_PARALLEL
-    for (index_parallel = 0; index_parallel < OPTIONS->Gener_Block;
-         ++index_parallel) {
-#endif /* ASA_TEMPLATE_PARALLEL */
-#endif /* ASA_PARALLEL */
-
-      if (OPTIONS->Locate_Cost < 0) {
-        OPTIONS->Locate_Cost = 12;      /* generate new state from new best */
-      } else {
-        OPTIONS->Locate_Cost = 2;       /* generate new state */
-      }
-
-      repeated_invalid_states = 0;
-      do {
-#if ASA_EXIT_ANYTIME
-        if ((ptr_exit_anytime = fopen ("asa_exit_anytime", "r")) == NULL) {
-          *exit_status = IMMEDIATE_EXIT;
-          goto EXIT_asa;
-        } else {
-          fclose (ptr_exit_anytime);
-        }
-#endif /* ASA_EXIT_ANYTIME */
-        ++(*number_invalid_generated_states);
-        generate_new_state (user_random_generator,
-                            seed,
-                            parameter_minimum,
-                            parameter_maximum, current_user_parameter_temp,
-#if USER_GENERATING_FUNCTION
-                            initial_user_parameter_temp,
-                            temperature_scale_parameters,
-#endif
-                            number_parameters,
-                            parameter_type,
-                            current_generated_state,
-                            last_saved_state, OPTIONS);
-
-        *valid_state_generated_flag = TRUE;
+    repeated_invalid_states = 0;
+    do {
+      valid_state_generated_flag_par_test = 0;
+      for (i_prll = 0; i_prll < OPTIONS->Gener_Block; ++i_prll) {
+        valid_state_generated_flag_par[i_prll] = TRUE;
+        number_invalid_generated_states_par[i_prll] =
+          *number_invalid_generated_states;
 #if USER_ACCEPTANCE_TEST
-        OPTIONS->User_Acceptance_Flag = FALSE;
-        OPTIONS->Cost_Acceptance_Flag = FALSE;
+        gener_block_state[i_prll].par_user_accept_flag =
+          OPTIONS->User_Acceptance_Flag;
+        gener_block_state[i_prll].par_cost_accept_flag =
+          OPTIONS->Cost_Acceptance_Flag;
 #endif
+      }
+
+      for (i_prll = 0; i_prll < OPTIONS->Gener_Block; ++i_prll) {
+        generate_flg_par[i_prll] =
+          generate_new_state_par (user_random_generator, seed,
+                                  parameter_minimum, parameter_maximum,
+                                  current_user_parameter_temp,
+#if USER_GENERATING_FUNCTION
+                                  initial_user_parameter_temp,
+                                  temperature_scale_parameters,
+#endif
+                                  number_parameters,
+                                  parameter_type,
+                                  i_prll,
+                                  gener_block_state, last_saved_state,
+                                  OPTIONS);
+
 #if ASA_QUEUE
         /* Binary trees do not seem necessary since we are assuming
            that the cost function calculation is the bottleneck.
            However, see the MISC.DIR/asa_contrib file for
            source code for doubly-linked and hashed lists. */
+        save_queue = (LONG_INT) OPTIONS->Queue_Size;
         if (OPTIONS->Queue_Size == 0) {
-          queue_new = 1;
+          queue_new_par[i_prll] = 1;
         } else {
-          queue_new = 1;
+          queue_new_par[i_prll] = 1;
           for (queue = 0; queue < save_queue; ++queue) {
-            save_queue_test = 0;
+            save_queue_test_par[i_prll] = 0;
             VFOR (index_v) {
               if (PARAMETER_RANGE_TOO_SMALL (index_v)) {
-                ++save_queue_test;
+                ++(save_queue_test_par[i_prll]);
               } else {
-                queue_v = index_v + queue * (LONG_INT) (*number_parameters);
+                queue_v_par[i_prll] =
+                  index_v + queue * (LONG_INT) (*number_parameters);
+                tmp_var_db_par[i_prll] =
+                  fabs (gener_block_state[i_prll].parameter
+                        [index_v] -
+                        save_queue_param_par[i_prll][queue_v_par[i_prll]]);
                 if (
 #if ASA_RESOLUTION
-                     /* Coarse_Resolution used in current_generated_state */
-                     fabs (current_generated_state->parameter[index_v] -
-                           save_queue_param[queue_v]) < EPS_DOUBLE
+                     /* Coarse_Resolution used in gener_block_state */
+                     tmp_var_db_par[i_prll]
+                     < EPS_DOUBLE
 #else
-                     fabs (current_generated_state->parameter[index_v] -
-                           save_queue_param[queue_v]) <
-                     (OPTIONS->Queue_Resolution[index_v] + EPS_DOUBLE)
+                     tmp_var_db_par[i_prll]
+                     < (OPTIONS->Queue_Resolution[index_v] + EPS_DOUBLE)
 #endif /* ASA_RESOLUTION */
                   ) {
-                  ++save_queue_test;
+                  ++(save_queue_test_par[i_prll]);
                 }
               }
             }
-            if (save_queue_test == *number_parameters) {
-              tmp_var_db = save_queue_cost[queue];
-              *valid_state_generated_flag = save_queue_flag[queue];
-              queue_new = 0;
+            if (save_queue_test_par[i_prll] == *number_parameters) {
+              queue_par_cost[i_prll] = save_queue_cost_par[i_prll][queue];
+              queue_new_par[i_prll] = 0;
+              valid_state_generated_flag_par[i_prll] =
+                save_queue_valid_state_flag_par[i_prll][queue];
+              if (valid_state_generated_flag_par[i_prll] == FALSE) {
+#if ASA_PRINT_MORE
+#if INT_LONG
+                fprintf (ptr_asa_out,
+                         "ASA_QUEUE: %ld BlockID: %ld \t previous invalid state\n",
+                         OPTIONS->N_Generated, i_prll);
+#else
+                fprintf (ptr_asa_out,
+                         "ASA_QUEUE: %d BlockID: %d \t previous invalid state\n",
+                         OPTIONS->N_Generated, i_prll);
+#endif
+#endif /* ASA_PRINT_MORE */
+              } else if (valid_state_generated_flag_par[i_prll] == TRUE) {
+#if ASA_PRINT_MORE
+#if INT_LONG
+                fprintf (ptr_asa_out, "ASA_QUEUE: %ld BlockID %ld \t %*.*g\n",
+                         OPTIONS->N_Generated, i_prll,
+                         G_FIELD, G_PRECISION, tmp_var_db_par[i_prll]);
+#else
+                fprintf (ptr_asa_out, "ASA_QUEUE: BlockID %d %d \t %*.*g\n",
+                         OPTIONS->N_Generated, i_prll,
+                         G_FIELD, G_PRECISION, tmp_var_db_par[i_prll]);
+#endif
+#endif /* ASA_PRINT_MORE */
+              }
+              break;
+            }
+          }
+        }
+#endif /* ASA_QUEUE */
+      }
+
+      /* *** ENTER CODE TO SPAWN OFF PARALLEL GENERATED STATES *** */
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif /* _OPENMP */
+      for (i_prll = 0; i_prll < OPTIONS->Gener_Block; ++i_prll) {
+#if ASA_QUEUE
+        if (queue_new_par[i_prll] == 0) {
+          gener_block_state[i_prll].cost = queue_par_cost[i_prll];
+        } else {
+#endif /* ASA_QUEUE */
+          OPTIONS->parallel_id = i_prll;
+          gener_block_state[i_prll].cost =
+            user_cost_function (gener_block_state[i_prll].parameter,
+                                parameter_minimum,
+                                parameter_maximum,
+                                tangents,
+                                curvature,
+                                number_parameters,
+                                parameter_type,
+                                &(valid_state_generated_flag_par[i_prll]),
+                                exit_status, OPTIONS);
+          tmp_var_db1_par[i_prll] =
+            cost_function_test (gener_block_state[i_prll].cost,
+                                gener_block_state[i_prll].parameter,
+                                parameter_minimum, parameter_maximum,
+                                number_parameters, xnumber_parameters);
+          if (tmp_var_db1_par[i_prll] == 0) {
+            EXIT_asa_parallel = 1;
+          }
+#if ASA_QUEUE
+        }
+#endif /* ASA_QUEUE */
+      }
+      /* *** EXIT CODE SPAWNING OFF PARALLEL GENERATED STATES *** */
+
+      if (EXIT_asa_parallel == 1) {
+        *exit_status = INVALID_COST_FUNCTION;
+#if noEXIT_INVALID_COST_FUNCTION
+        ++repeated_invalid_states;
+        *valid_state_generated_flag = FALSE;
+#else
+        goto EXIT_asa;
+#endif /* noEXIT_INVALID_COST_FUNCTION */
+      }
+#if ASA_QUEUE
+      for (i_prll = 0; i_prll < OPTIONS->Gener_Block; ++i_prll) {
+        if (valid_state_generated_flag_par[i_prll] == FALSE) {
+          ++valid_state_generated_flag_par_test;
+        }
+        if (queue_new_par[i_prll] == 1) {
+          if (OPTIONS->Queue_Size > 0) {        /* in case recursive use */
+            VFOR (index_v) {
+              if (PARAMETER_RANGE_TOO_SMALL (index_v)) {
+                continue;
+              }
+              queue_v_par[i_prll] = index_v + save_queue_indx_par[i_prll]
+                * (LONG_INT) (*number_parameters);
+              save_queue_param_par[i_prll][queue_v_par[i_prll]] =
+                gener_block_state[i_prll].parameter[index_v];
+            }
+            save_queue_cost_par[i_prll][save_queue_indx_par[i_prll]] =
+              gener_block_state[i_prll].cost;
+            save_queue_valid_state_flag_par[i_prll][save_queue_indx_par
+                                                    [i_prll]]
+              = valid_state_generated_flag_par[i_prll];
+
+            ++(save_queue_par[i_prll]);
+            if (save_queue_par[i_prll] == (LONG_INT) OPTIONS->Queue_Size)
+              --(save_queue_par[i_prll]);
+
+            ++(save_queue_indx_par[i_prll]);
+            if (save_queue_indx_par[i_prll] == (LONG_INT) OPTIONS->Queue_Size)
+              save_queue_indx_par[i_prll] = 0;
+          }
+        }
+      }
+#endif /* ASA_QUEUE */
+      repeated_invalid_states += valid_state_generated_flag_par_test;
+    }
+    while (valid_state_generated_flag_par_test >= OPTIONS->Gener_Block);
+
+    if ((OPTIONS->Limit_Invalid_Generated_States != -1)
+        && (repeated_invalid_states >
+            OPTIONS->Limit_Invalid_Generated_States)) {
+      *exit_status = TOO_MANY_INVALID_STATES;
+      goto EXIT_asa;
+    }
+#else /* ASA_PARALLEL */
+    repeated_invalid_states = 0;
+    do {
+      ++(*number_invalid_generated_states);
+      generate_flg = generate_new_state (user_random_generator,
+                                         seed,
+                                         parameter_minimum,
+                                         parameter_maximum,
+                                         current_user_parameter_temp,
+#if USER_GENERATING_FUNCTION
+                                         initial_user_parameter_temp,
+                                         temperature_scale_parameters,
+#endif
+                                         number_parameters,
+                                         parameter_type,
+                                         current_generated_state,
+                                         last_saved_state, OPTIONS);
+
+      *valid_state_generated_flag = TRUE;
+#if ASA_QUEUE
+      /* Binary trees do not seem necessary since we are assuming
+         that the cost function calculation is the bottleneck.
+         However, see the MISC.DIR/asa_contrib file for
+         source code for doubly-linked and hashed lists. */
+      save_queue = (LONG_INT) OPTIONS->Queue_Size;
+      if (OPTIONS->Queue_Size == 0) {
+        queue_new = 1;
+      } else {
+        queue_new = 1;
+        for (queue = 0; queue < save_queue; ++queue) {
+          save_queue_test = 0;
+          VFOR (index_v) {
+            if (PARAMETER_RANGE_TOO_SMALL (index_v)) {
+              ++save_queue_test;
+            } else {
+              queue_v = index_v + queue * (LONG_INT) (*number_parameters);
+              if (
+#if ASA_RESOLUTION
+                   /* Coarse_Resolution used in current_generated_state */
+                   fabs (current_generated_state->parameter[index_v] -
+                         save_queue_param[queue_v]) < EPS_DOUBLE
+#else
+                   fabs (current_generated_state->parameter[index_v] -
+                         save_queue_param[queue_v]) <
+                   (OPTIONS->Queue_Resolution[index_v] + EPS_DOUBLE)
+#endif /* ASA_RESOLUTION */
+                ) {
+                ++save_queue_test;
+              }
+            }
+          }
+          if (save_queue_test == *number_parameters) {
+            tmp_var_db = save_queue_cost[queue];
+            queue_new = 0;
+            *valid_state_generated_flag = save_queue_flag[queue];
+            if (*valid_state_generated_flag == FALSE) {
+#if ASA_PRINT_MORE
+#if INT_LONG
+              fprintf (ptr_asa_out,
+                       "ASA_QUEUE: %ld \t previous invalid state\n",
+                       OPTIONS->N_Generated);
+#else
+              fprintf (ptr_asa_out,
+                       "ASA_QUEUE: %d \t previous invalid state\n",
+                       OPTIONS->N_Generated);
+#endif
+#endif /* ASA_PRINT_MORE */
+            } else {
 #if ASA_PRINT_MORE
 #if INT_LONG
               fprintf (ptr_asa_out, "ASA_QUEUE: %ld \t %*.*g\n",
@@ -2092,55 +2514,13 @@ RET1_asa:
                        OPTIONS->N_Generated,
                        G_FIELD, G_PRECISION, tmp_var_db);
 #endif
-#endif
-              break;
+#endif /* ASA_PRINT_MORE */
             }
+            break;
           }
         }
-        if (queue_new == 1) {
-          tmp_var_db =
-            user_cost_function (current_generated_state->parameter,
-                                parameter_minimum,
-                                parameter_maximum,
-                                tangents,
-                                curvature,
-                                number_parameters,
-                                parameter_type,
-                                valid_state_generated_flag,
-                                exit_status, OPTIONS);
-          if (cost_function_test (tmp_var_db,
-                                  current_generated_state->parameter,
-                                  parameter_minimum,
-                                  parameter_maximum,
-                                  number_parameters,
-                                  xnumber_parameters) == 0) {
-            *exit_status = INVALID_COST_FUNCTION;
-            goto EXIT_asa;
-          }
-          if (OPTIONS->Queue_Size > 0) {        /* in case recursive use */
-            VFOR (index_v) {
-              if (PARAMETER_RANGE_TOO_SMALL (index_v)) {
-                continue;
-              }
-              queue_v = index_v + save_queue_indx
-                * (LONG_INT) (*number_parameters);
-              save_queue_param[queue_v] =
-                current_generated_state->parameter[index_v];
-            }
-            save_queue_cost[save_queue_indx] = tmp_var_db;
-            save_queue_flag[save_queue_indx]
-              = *valid_state_generated_flag;
-
-            ++save_queue;
-            if (save_queue == (LONG_INT) OPTIONS->Queue_Size)
-              --save_queue;
-
-            ++save_queue_indx;
-            if (save_queue_indx == (LONG_INT) OPTIONS->Queue_Size)
-              save_queue_indx = 0;
-          }
-        }
-#else /* ASA_QUEUE */
+      }
+      if (queue_new == 1) {
         tmp_var_db =
           user_cost_function (current_generated_state->parameter,
                               parameter_minimum,
@@ -2154,68 +2534,105 @@ RET1_asa:
         if (cost_function_test (tmp_var_db,
                                 current_generated_state->parameter,
                                 parameter_minimum,
-                                parameter_maximum, number_parameters,
-                                xnumber_parameters) == 0) {
+                                parameter_maximum,
+                                number_parameters, xnumber_parameters) == 0) {
           *exit_status = INVALID_COST_FUNCTION;
+#if noEXIT_INVALID_COST_FUNCTION
+          ++repeated_invalid_states;
+          *valid_state_generated_flag = FALSE;
+#else
           goto EXIT_asa;
+#endif /* noEXIT_INVALID_COST_FUNCTION */
         }
-#endif /* ASA_QUEUE */
-        current_generated_state->cost = tmp_var_db;
+        if (OPTIONS->Queue_Size > 0) {  /* in case recursive use */
+          VFOR (index_v) {
+            if (PARAMETER_RANGE_TOO_SMALL (index_v)) {
+              continue;
+            }
+            queue_v = index_v + save_queue_indx
+              * (LONG_INT) (*number_parameters);
+            save_queue_param[queue_v] =
+              current_generated_state->parameter[index_v];
+          }
+          save_queue_cost[save_queue_indx] = tmp_var_db;
+          save_queue_flag[save_queue_indx]
+            = *valid_state_generated_flag;
+
+          ++save_queue;
+          if (save_queue == (LONG_INT) OPTIONS->Queue_Size)
+            --save_queue;
+
+          ++save_queue_indx;
+          if (save_queue_indx == (LONG_INT) OPTIONS->Queue_Size)
+            save_queue_indx = 0;
+        }
+      }
+#else /* ASA_QUEUE */
+      tmp_var_db =
+        user_cost_function (current_generated_state->parameter,
+                            parameter_minimum,
+                            parameter_maximum,
+                            tangents,
+                            curvature,
+                            number_parameters,
+                            parameter_type,
+                            valid_state_generated_flag, exit_status, OPTIONS);
+      if (cost_function_test
+          (tmp_var_db, current_generated_state->parameter,
+           parameter_minimum, parameter_maximum, number_parameters,
+           xnumber_parameters) == 0) {
+        *exit_status = INVALID_COST_FUNCTION;
+#if noEXIT_INVALID_COST_FUNCTION
         ++repeated_invalid_states;
-        if (repeated_invalid_states > OPTIONS->Limit_Invalid_Generated_States) {
-          *exit_status = TOO_MANY_INVALID_STATES;
-          goto EXIT_asa;
-        }
+        *valid_state_generated_flag = FALSE;
+#else
+        goto EXIT_asa;
+#endif /* noEXIT_INVALID_COST_FUNCTION */
       }
-      while (*valid_state_generated_flag == FALSE);
-      --(*number_invalid_generated_states);
-#if ASA_PARALLEL
-      gener_block_state[index_parallel].cost = current_generated_state->cost;
-#if USER_ACCEPTANCE_TEST
-      gener_block_state[index_parallel].par_user_accept_flag =
-        OPTIONS->User_Acceptance_Flag;
-      gener_block_state[index_parallel].par_cost_accept_flag =
-        OPTIONS->Cost_Acceptance_Flag;
-#endif
-      VFOR (index_v) {
-        /* ignore parameters with too small a range */
-        if (PARAMETER_RANGE_TOO_SMALL (index_v))
-          continue;
-        gener_block_state[index_parallel].parameter[index_v] =
-          current_generated_state->parameter[index_v];
+#endif /* ASA_QUEUE */
+      current_generated_state->cost = tmp_var_db;
+      ++repeated_invalid_states;
+      if ((OPTIONS->Limit_Invalid_Generated_States != -1)
+          && (repeated_invalid_states >
+              OPTIONS->Limit_Invalid_Generated_States)) {
+        *exit_status = TOO_MANY_INVALID_STATES;
+        goto EXIT_asa;
       }
-#if ASA_TEMPLATE_PARALLEL
     }
-#endif /* ASA_TEMPLATE_PARALLEL */
-    /* *** EXIT CODE SPAWNING OFF PARALLEL GENERATED STATES *** */
+    while (*valid_state_generated_flag == FALSE);
+    --(*number_invalid_generated_states);
 #endif /* ASA_PARALLEL */
 
     /* ACCEPT/REJECT NEW PARAMETERS */
 
 #if ASA_PARALLEL
-    for (sort_index = 0; sort_index < OPTIONS->Gener_Block; ++sort_index)
+    for (sort_index = 0; sort_index < OPTIONS->Gener_Block; ++sort_index) {
       parallel_sort[sort_index] = sort_index;
+    }
     qsort (parallel_sort, OPTIONS->Gener_Block, sizeof (LONG_INT),
            sort_parallel);
 
     for (sort_index = 0; sort_index < OPTIONS->Gener_Block; ++sort_index) {
-      index_parallel = parallel_sort[sort_index];
-      current_generated_state->cost = gener_block_state[index_parallel].cost;
+      i_prll = parallel_sort[sort_index];
+      if (valid_state_generated_flag_par[i_prll] == FALSE) {
+        continue;
+      }
+      current_generated_state->cost = gener_block_state[i_prll].cost;
 #if USER_ACCEPTANCE_TEST
       OPTIONS->User_Acceptance_Flag =
-        gener_block_state[index_parallel].par_user_accept_flag;
+        gener_block_state[i_prll].par_user_accept_flag;
       OPTIONS->Cost_Acceptance_Flag =
-        gener_block_state[index_parallel].par_cost_accept_flag;
+        gener_block_state[i_prll].par_cost_accept_flag;
 #endif
       VFOR (index_v) {
         /* ignore parameters with too small a range */
         if (PARAMETER_RANGE_TOO_SMALL (index_v))
           continue;
         current_generated_state->parameter[index_v] =
-          gener_block_state[index_parallel].parameter[index_v];
+          gener_block_state[i_prll].parameter[index_v];
       }
 #endif /* ASA_PARALLEL */
-      /* decide to accept/reject the new state */
+      /* decide whether to accept/reject the new state */
       accept_new_state (user_random_generator,
                         seed,
                         parameter_minimum,
@@ -2383,7 +2800,6 @@ RET1_asa:
 #endif /* MULTI_MIN */
 
       /* CHECK FOR NEW MINIMUM */
-
       if (current_generated_state->cost < best_generated_state->cost) {
         best_flag = 1;
       } else {
@@ -2404,9 +2820,6 @@ RET1_asa:
         OPTIONS->Locate_Cost = -1;
 
         /* reset the recent acceptances and generated counts */
-#if ASA_PARALLEL
-        parallel_generated = *recent_number_generated;
-#endif
         *recent_number_acceptances = *recent_number_generated = 0;
         if (best_flag == 1) {
           *best_number_generated_saved = *number_generated;
@@ -2482,23 +2895,8 @@ RET1_asa:
         }
         fflush (ptr_asa_out);
 #endif /* ASA_PRINT */
-
-#if ASA_PARALLEL
-        /* leave index_parallel loop after new minimum */
-        break;
-#endif /* ASA_PARALLEL */
       }
 #if ASA_PARALLEL
-    }
-#endif /* ASA_PARALLEL */
-
-#if ASA_PARALLEL
-    if (OPTIONS->Gener_Mov_Avr > 0) {
-      OPTIONS->Gener_Block = (LONG_INT)
-        ((((double) OPTIONS->Gener_Mov_Avr - ONE)
-          * (double) (OPTIONS->Gener_Block) + (double) parallel_generated)
-         / (double) (OPTIONS->Gener_Mov_Avr));
-      OPTIONS->Gener_Block = MIN (OPTIONS->Gener_Block, parallel_block_max);
     }
 #endif /* ASA_PARALLEL */
 
@@ -2520,10 +2918,10 @@ RET1_asa:
 
       fwrite (number_parameters, sizeof (ALLOC_INT), 1, ptr_save);
       fwrite (xnumber_parameters, sizeof (double), 1, ptr_save);
-      fwrite (parameter_minimum, sizeof (double),
-              *number_parameters, ptr_save);
-      fwrite (parameter_maximum, sizeof (double),
-              *number_parameters, ptr_save);
+      fwrite (parameter_minimum, sizeof (double), *number_parameters,
+              ptr_save);
+      fwrite (parameter_maximum, sizeof (double), *number_parameters,
+              ptr_save);
       fwrite (tangents, sizeof (double), *number_parameters, ptr_save);
       fwrite (current_user_parameter_temp, sizeof (double),
               *number_parameters, ptr_save);
@@ -2551,8 +2949,8 @@ RET1_asa:
       fwrite (number_acceptances_saved, sizeof (LONG_INT), 1, ptr_save);
       fwrite (recent_number_acceptances, sizeof (LONG_INT), 1, ptr_save);
       fwrite (recent_number_generated, sizeof (LONG_INT), 1, ptr_save);
-      fwrite (number_invalid_generated_states, sizeof (LONG_INT),
-              1, ptr_save);
+      fwrite (number_invalid_generated_states, sizeof (LONG_INT), 1,
+              ptr_save);
       fwrite (index_cost_acceptances, sizeof (LONG_INT), 1, ptr_save);
       fwrite (best_number_generated_saved, sizeof (LONG_INT), 1, ptr_save);
       fwrite (best_number_accepted_saved, sizeof (LONG_INT), 1, ptr_save);
@@ -2602,8 +3000,8 @@ RET1_asa:
       fwrite (&(OPTIONS->User_Tangents), sizeof (int), 1, ptr_save);
 
 #if USER_INITIAL_COST_TEMP
-      fwrite (&(OPTIONS->User_Cost_Temperature), sizeof (double),
-              1, ptr_save);
+      fwrite (&(OPTIONS->User_Cost_Temperature), sizeof (double), 1,
+              ptr_save);
 #endif
 #if RATIO_TEMPERATURE_SCALES
       fwrite (OPTIONS->User_Temperature_Ratio, sizeof (double),
@@ -2656,6 +3054,9 @@ RET1_asa:
 #if USER_ASA_OUT
       fwrite (OPTIONS->Asa_Out_File, sizeof (char), 80, ptr_save);
 #endif
+#if USER_ASA_OUT
+      fwrite (OPTIONS->Asa_Usr_Out_File, sizeof (char), 80, ptr_save);
+#endif
 #if USER_COST_SCHEDULE
       fwrite (&(OPTIONS->Cost_Schedule), sizeof (char), 1, ptr_save);
 #endif
@@ -2663,7 +3064,7 @@ RET1_asa:
       fwrite (&(OPTIONS->Asymp_Exp_Param), sizeof (double), 1, ptr_save);
 #endif
 #if USER_ACCEPTANCE_TEST
-      fwrite (&(OPTIONS->Acceptance_Test), sizeof (char), 1, ptr_save);
+      fwrite (&(OPTIONS->Acceptance_Fit), sizeof (char), 1, ptr_save);
       fwrite (&(OPTIONS->User_Acceptance_Flag), sizeof (int), 1, ptr_save);
       fwrite (&(OPTIONS->Cost_Acceptance_Flag), sizeof (int), 1, ptr_save);
       fwrite (&(OPTIONS->Cost_Temp_Curr), sizeof (double), 1, ptr_save);
@@ -2677,8 +3078,8 @@ RET1_asa:
       fwrite (&(OPTIONS->Reanneal_Cost_Function), sizeof (char), 1, ptr_save);
 #endif
 #if USER_REANNEAL_PARAMETERS
-      fwrite (&(OPTIONS->Reanneal_Params_Function), sizeof (char),
-              1, ptr_save);
+      fwrite (&(OPTIONS->Reanneal_Params_Function), sizeof (char), 1,
+              ptr_save);
 #endif
 #if ASA_SAMPLE
       fwrite (&(OPTIONS->Bias_Acceptance), sizeof (double), 1, ptr_save);
@@ -2700,7 +3101,7 @@ RET1_asa:
       fwrite (OPTIONS->Queue_Resolution, sizeof (double),
               *number_parameters, ptr_save);
 #endif
-#endif
+#endif /* ASA_QUEUE */
 #if ASA_RESOLUTION
       fwrite (OPTIONS->Coarse_Resolution, sizeof (double),
               *number_parameters, ptr_save);
@@ -2730,26 +3131,23 @@ RET1_asa:
       }
 #endif
 #if ASA_PARALLEL
-      fwrite (&parallel_generated, sizeof (LONG_INT), 1, ptr_save);
-      fwrite (&parallel_block_max, sizeof (LONG_INT), 1, ptr_save);
-      for (index_parallel = 0; index_parallel < parallel_block_max;
-           ++index_parallel) {
-        fwrite (gener_block_state[index_parallel].parameter,
+      for (i_prll = 0; i_prll < OPTIONS->Gener_Block_Max; ++i_prll) {
+        fwrite (gener_block_state[i_prll].parameter,
                 sizeof (double), *number_parameters, ptr_save);
-        fwrite (&(gener_block_state[index_parallel].cost),
+        fwrite (&(gener_block_state[i_prll].cost),
                 sizeof (double), 1, ptr_save);
 #if USER_ACCEPTANCE_TEST
         fwrite (&
-                (gener_block_state[index_parallel].par_user_accept_flag),
+                (gener_block_state[i_prll].par_user_accept_flag),
                 sizeof (int), 1, ptr_save);
-        fwrite (&(gener_block_state[index_parallel].par_cost_accept_flag),
+        fwrite (&(gener_block_state[i_prll].par_cost_accept_flag),
                 sizeof (int), 1, ptr_save);
 #endif
       }
       fwrite (&(OPTIONS->Gener_Mov_Avr), sizeof (int), 1, ptr_save);
       fwrite (&(OPTIONS->Gener_Block), sizeof (LONG_INT), 1, ptr_save);
       fwrite (&(OPTIONS->Gener_Block_Max), sizeof (LONG_INT), 1, ptr_save);
-#endif
+#endif /* ASA_PARALLEL */
 
       fclose (ptr_save);
 
@@ -2818,8 +3216,28 @@ RET1_asa:
     if (tmp_var_int1 == TRUE || tmp_var_int2 == TRUE
         || (*accepted_to_generated_ratio
             < OPTIONS->Accepted_To_Generated_Ratio)) {
-      if (*accepted_to_generated_ratio
-          < (OPTIONS->Accepted_To_Generated_Ratio))
+
+#if ASA_PARALLEL
+      if (OPTIONS->Gener_Mov_Avr > 0) {
+        for (i_prll = 1; i_prll < OPTIONS->Gener_Mov_Avr; ++i_prll) {
+          parallel_gen_ratio_block[i_prll - 1] =
+            parallel_gen_ratio_block[i_prll];
+        }
+        parallel_gen_ratio_block[OPTIONS->Gener_Mov_Avr - 1] =
+          *recent_number_generated;
+        tmp_var_lint = 0;
+        for (i_prll = 0; i_prll < OPTIONS->Gener_Mov_Avr; ++i_prll) {
+          tmp_var_lint += parallel_gen_ratio_block[i_prll];
+        }
+        OPTIONS->Gener_Block = (LONG_INT)
+          ((double) tmp_var_lint / (double) (OPTIONS->Gener_Mov_Avr));
+        OPTIONS->Gener_Block =
+          MIN (OPTIONS->Gener_Block, OPTIONS->Gener_Block_Max);
+      }
+#endif /* ASA_PARALLEL */
+
+      if (*accepted_to_generated_ratio <
+          (OPTIONS->Accepted_To_Generated_Ratio))
         *recent_number_acceptances = *recent_number_generated = 0;
 
       /* if best.cost repeats OPTIONS->Maximum_Cost_Repeat then exit */
@@ -2835,7 +3253,6 @@ RET1_asa:
           index_cost_repeat = 0;
         }
       }
-
       if (OPTIONS->Reanneal_Parameters == TRUE) {
         OPTIONS->Locate_Cost = 3;       /* reanneal parameters */
 
@@ -2891,19 +3308,19 @@ RET1_asa:
             }
 #endif /* ASA_EXIT_ANYTIME */
             ++(*number_invalid_generated_states);
-            generate_new_state (user_random_generator,
-                                seed,
-                                parameter_minimum,
-                                parameter_maximum,
-                                current_user_parameter_temp,
+            generate_flg = generate_new_state (user_random_generator,
+                                               seed,
+                                               parameter_minimum,
+                                               parameter_maximum,
+                                               current_user_parameter_temp,
 #if USER_GENERATING_FUNCTION
-                                initial_user_parameter_temp,
-                                temperature_scale_parameters,
+                                               initial_user_parameter_temp,
+                                               temperature_scale_parameters,
 #endif
-                                number_parameters,
-                                parameter_type,
-                                current_generated_state,
-                                last_saved_state, OPTIONS);
+                                               number_parameters,
+                                               parameter_type,
+                                               current_generated_state,
+                                               last_saved_state, OPTIONS);
             *valid_state_generated_flag = TRUE;
 #if USER_ACCEPTANCE_TEST
             OPTIONS->User_Acceptance_Flag = TRUE;
@@ -2921,8 +3338,8 @@ RET1_asa:
                   if (PARAMETER_RANGE_TOO_SMALL (index_v)) {
                     ++save_queue_test;
                   } else {
-                    queue_v = index_v + queue
-                      * (LONG_INT) (*number_parameters);
+                    queue_v =
+                      index_v + queue * (LONG_INT) (*number_parameters);
                     if (
 #if ASA_RESOLUTION
                          /* Coarse_Resolution used in current_generated_state */
@@ -2940,21 +3357,33 @@ RET1_asa:
                 }
                 if (save_queue_test == *number_parameters) {
                   tmp_var_db = save_queue_cost[queue];
-                  *valid_state_generated_flag = save_queue_flag[queue];
                   queue_new = 0;
+                  *valid_state_generated_flag = save_queue_flag[queue];
+                  if (*valid_state_generated_flag == FALSE) {
 #if ASA_PRINT_MORE
 #if INT_LONG
-                  fprintf (ptr_asa_out,
-                           "ASA_QUEUE: %ld \t %*.*g\n",
-                           OPTIONS->N_Generated, G_FIELD,
-                           G_PRECISION, tmp_var_db);
+                    fprintf (ptr_asa_out,
+                             "ASA_QUEUE: %ld \t previous invalid state\n",
+                             OPTIONS->N_Generated);
 #else
-                  fprintf (ptr_asa_out,
-                           "ASA_QUEUE: %d \t %*.*g\n",
-                           OPTIONS->N_Generated, G_FIELD,
-                           G_PRECISION, tmp_var_db);
+                    fprintf (ptr_asa_out,
+                             "ASA_QUEUE: %d \t previous invalid state\n",
+                             OPTIONS->N_Generated);
 #endif
+#endif /* ASA_PRINT_MORE */
+                  } else {
+#if ASA_PRINT_MORE
+#if INT_LONG
+                    fprintf (ptr_asa_out, "ASA_QUEUE: %ld \t %*.*g\n",
+                             OPTIONS->N_Generated,
+                             G_FIELD, G_PRECISION, tmp_var_db);
+#else
+                    fprintf (ptr_asa_out, "ASA_QUEUE: %d \t %*.*g\n",
+                             OPTIONS->N_Generated,
+                             G_FIELD, G_PRECISION, tmp_var_db);
 #endif
+#endif /* ASA_PRINT_MORE */
+                  }
                   break;
                 }
               }
@@ -2972,7 +3401,12 @@ RET1_asa:
                    parameter_minimum, parameter_maximum, number_parameters,
                    xnumber_parameters) == 0) {
                 *exit_status = INVALID_COST_FUNCTION;
+#if noEXIT_INVALID_COST_FUNCTION
+                ++repeated_invalid_states;
+                *valid_state_generated_flag = FALSE;
+#else
                 goto EXIT_asa;
+#endif /* noEXIT_INVALID_COST_FUNCTION */
               }
               if (OPTIONS->Queue_Size > 0) {
                 VFOR (index_v) {
@@ -3009,12 +3443,18 @@ RET1_asa:
                  parameter_minimum, parameter_maximum, number_parameters,
                  xnumber_parameters) == 0) {
               *exit_status = INVALID_COST_FUNCTION;
+#if noEXIT_INVALID_COST_FUNCTION
+              ++repeated_invalid_states;
+              *valid_state_generated_flag = FALSE;
+#else
               goto EXIT_asa;
+#endif /* noEXIT_INVALID_COST_FUNCTION */
             }
 #endif /* ASA_QUEUE */
             ++repeated_invalid_states;
-            if (repeated_invalid_states >
-                OPTIONS->Limit_Invalid_Generated_States) {
+            if ((OPTIONS->Limit_Invalid_Generated_States != -1)
+                && (repeated_invalid_states >
+                    OPTIONS->Limit_Invalid_Generated_States)) {
               *exit_status = TOO_MANY_INVALID_STATES;
               goto EXIT_asa;
             }
@@ -3086,6 +3526,7 @@ RET1_asa:
   /* FINISHED ANNEALING and MINIMIZATION */
 
   *exit_status = NORMAL_EXIT;
+
 EXIT_asa:
 
   asa_exit_value = asa_exit (user_cost_function,
@@ -3146,7 +3587,7 @@ EXIT_asa:
   free (save_queue_flag);
   free (save_queue_cost);
   free (save_queue_param);
-#endif
+#endif /* ASA_QUEUE */
 #if MULTI_MIN
   for (multi_index = 0; multi_index <= OPTIONS->Multi_Number; ++multi_index)
     free (multi_params[multi_index]);
@@ -3155,13 +3596,35 @@ EXIT_asa:
   free (multi_cost);
 #endif
 #if ASA_PARALLEL
-  for (index_parallel = 0; index_parallel < parallel_block_max;
-       ++index_parallel) {
-    free (gener_block_state[index_parallel].parameter);
+  for (i_prll = 0; i_prll < OPTIONS->Gener_Block_Max; ++i_prll) {
+    free (gener_block_state[i_prll].parameter);
   }
   free (gener_block_state);
   free (parallel_sort);
-#endif
+  free (parallel_gen_ratio_block);
+  free (generate_flg_par);
+  free (number_invalid_generated_states_par);
+  free (repeated_invalid_states_par);
+  free (tmp_var_db1_par);
+  free (tmp_var_db_par);
+  free (valid_state_generated_flag_par);
+#if ASA_QUEUE
+  free (queue_par_cost);
+  for (i_prll = 0; i_prll < OPTIONS->Gener_Block_Max; ++i_prll) {
+    free (save_queue_param_par[i_prll]);
+    free (save_queue_valid_state_flag_par[i_prll]);
+    free (save_queue_cost_par[i_prll]);
+  }
+  free (save_queue_valid_state_flag_par);
+  free (save_queue_cost_par);
+  free (save_queue_param_par);
+  free (queue_new_par);
+  free (queue_v_par);
+  free (save_queue_indx_par);
+  free (save_queue_test_par);
+  free (save_queue_par);
+#endif /* ASA_QUEUE */
+#endif /* ASA_PARALLEL */
 #if ASA_PIPE_FILE
   fclose (ptr_asa_pipe);
 #endif
@@ -3184,7 +3647,6 @@ EXIT_asa:
 #if HAVE_ANSI
 int
 asa_exit (double (*user_cost_function)
-
            
           (double *, double *, double *, double *, double *, ALLOC_INT *,
            int *, int *, int *, USER_DEFINES *), double *final_cost,
@@ -3208,7 +3670,6 @@ asa_exit (double (*user_cost_function)
           USER_DEFINES * OPTIONS)
 #else
 int
-
 asa_exit (user_cost_function,
           final_cost,
           parameter_initial_final,
@@ -3331,7 +3792,8 @@ asa_exit (user_cost_function,
     }
 #if ASA_PRINT
     if (exit_exit_status == INVALID_COST_FUNCTION_DERIV)
-      fprintf (ptr_asa_out, "\n\n  in asa_exit: INVALID_COST_FUNCTION_DERIV");
+      fprintf (ptr_asa_out,
+               "\n\n  in asa_exit: INVALID_COST_FUNCTION_DERIV\n");
 
     if (*exit_status != INVALID_USER_INPUT
         && *exit_status != INVALID_COST_FUNCTION
@@ -3507,9 +3969,9 @@ asa_exit (user_cost_function,
   print_time ("asa_end", ptr_asa_out);
 #endif
   fprintf (ptr_asa_out, "\n\n\n");
+#endif
   fflush (ptr_asa_out);
   fclose (ptr_asa_out);
-#endif
 
   return (0);
 }
@@ -3519,8 +3981,7 @@ asa_exit (user_cost_function,
 *       Generates a valid new state from the old state
 ***********************************************************************/
 #if HAVE_ANSI
-void
-
+int
 generate_new_state (double (*user_random_generator) (LONG_INT *),
                     LONG_INT * seed,
                     double *parameter_minimum,
@@ -3535,8 +3996,7 @@ generate_new_state (double (*user_random_generator) (LONG_INT *),
                     STATE * current_generated_state,
                     STATE * last_saved_state, USER_DEFINES * OPTIONS)
 #else
-void
-
+int
 generate_new_state (user_random_generator,
                     seed,
                     parameter_minimum,
@@ -3706,8 +4166,207 @@ generate_new_state (user_random_generator,
     if (OPTIONS->Sequential_Parameters >= 0)
       break;
   }
-
+  return (0);
 }
+
+#if ASA_PARALLEL
+/***********************************************************************
+* generate_new_state_par
+*       Generates a valid new state from the old state
+***********************************************************************/
+#if HAVE_ANSI
+int
+generate_new_state_par (double (*user_random_generator) (LONG_INT *),
+                        LONG_INT * seed,
+                        double *parameter_minimum,
+                        double *parameter_maximum,
+                        double *current_user_parameter_temp,
+#if USER_GENERATING_FUNCTION
+                        double *initial_user_parameter_temp,
+                        double *temperature_scale_parameters,
+#endif
+                        ALLOC_INT * number_parameters,
+                        int *parameter_type,
+                        LONG_INT i_prll,
+                        STATE * gener_block_state,
+                        STATE * last_saved_state, USER_DEFINES * OPTIONS)
+#else
+int
+generate_new_state_par (user_random_generator,
+                        seed,
+                        parameter_minimum,
+                        parameter_maximum, current_user_parameter_temp,
+#if USER_GENERATING_FUNCTION
+                        initial_user_parameter_temp,
+                        temperature_scale_parameters,
+#endif
+                        number_parameters,
+                        parameter_type,
+                        i_prll, gener_block_state, last_saved_state, OPTIONS)
+     double (*user_random_generator) ();
+     LONG_INT *seed;
+     double *parameter_minimum;
+     double *parameter_maximum;
+     double *current_user_parameter_temp;
+#if USER_GENERATING_FUNCTION
+     double *initial_user_parameter_temp;
+     double *temperature_scale_parameters;
+#endif
+     ALLOC_INT *number_parameters;
+     int *parameter_type;
+     LONG_INT i_prll;
+     STATE *gener_block_state;
+     STATE *last_saved_state;
+     USER_DEFINES *OPTIONS;
+#endif
+{
+  ALLOC_INT index_v;
+  double x;
+  double parameter_v, min_parameter_v, max_parameter_v, temperature_v,
+    parameter_range_v;
+#if USER_GENERATING_FUNCTION
+  double init_param_temp_v;
+  double temp_scale_params_v;
+#endif
+#if ASA_RESOLUTION
+  double xres, xint, xminus, xplus, dx, dxminus, dxplus;
+#endif
+
+  /* generate a new value for each parameter */
+  VFOR (index_v) {
+    if (OPTIONS->Sequential_Parameters >= -1) {
+      ++OPTIONS->Sequential_Parameters;
+      if (OPTIONS->Sequential_Parameters == *number_parameters)
+        OPTIONS->Sequential_Parameters = 0;
+      index_v = OPTIONS->Sequential_Parameters;
+    }
+    min_parameter_v = parameter_minimum[index_v];
+    max_parameter_v = parameter_maximum[index_v];
+    parameter_range_v = max_parameter_v - min_parameter_v;
+
+    /* ignore parameters that have too small a range */
+    if (fabs (parameter_range_v) < (double) EPS_DOUBLE)
+      continue;
+
+    temperature_v = current_user_parameter_temp[index_v];
+#if USER_GENERATING_FUNCTION
+    init_param_temp_v = initial_user_parameter_temp[index_v];
+    temp_scale_params_v = temperature_scale_parameters[index_v];
+#endif
+    parameter_v = last_saved_state->parameter[index_v];
+
+    /* Handle discrete parameters. */
+#if ASA_RESOLUTION
+    xres = OPTIONS->Coarse_Resolution[index_v];
+    if (xres > EPS_DOUBLE) {
+      min_parameter_v -= (xres / TWO);
+      max_parameter_v += (xres / TWO);
+      parameter_range_v = max_parameter_v - min_parameter_v;
+    }
+#endif /* ASA_RESOLUTION */
+    if (INTEGER_PARAMETER (index_v)) {
+#if ASA_RESOLUTION
+      if (xres > EPS_DOUBLE) {
+        ;
+      } else {
+#endif /* ASA_RESOLUTION */
+        min_parameter_v -= HALF;
+        max_parameter_v += HALF;
+        parameter_range_v = max_parameter_v - min_parameter_v;
+      }
+#if ASA_RESOLUTION
+    }
+#endif
+
+    /* generate a new state x within the parameter bounds */
+    for (;;) {
+#if USER_GENERATING_FUNCTION
+      x = OPTIONS->Generating_Distrib (seed,
+                                       number_parameters,
+                                       index_v,
+                                       temperature_v,
+                                       init_param_temp_v,
+                                       temp_scale_params_v,
+                                       parameter_v,
+                                       parameter_range_v,
+                                       last_saved_state->parameter, OPTIONS);
+#else
+      x = parameter_v
+        + generate_asa_state (user_random_generator, seed, &temperature_v)
+        * parameter_range_v;
+#endif /* USER_GENERATING_FUNCTION */
+#if ASA_RESOLUTION
+      if (xres > EPS_DOUBLE) {
+        xint = xres * (double) ((LONG_INT) (x / xres));
+        xplus = xint + xres;
+        xminus = xint - xres;
+        dx = fabs (xint - x);
+        dxminus = fabs (xminus - x);
+        dxplus = fabs (xplus - x);
+
+        if (dx < dxminus && dx < dxplus)
+          x = xint;
+        else if (dxminus < dxplus)
+          x = xminus;
+        else
+          x = xplus;
+      }
+#endif /* ASA_RESOLUTION */
+
+      /* exit the loop if within its valid parameter range */
+      if (x <= max_parameter_v - (double) EPS_DOUBLE
+          && x >= min_parameter_v + (double) EPS_DOUBLE)
+        break;
+    }
+
+    /* Handle discrete parameters.
+       You might have to check rounding on your machine. */
+    if (INTEGER_PARAMETER (index_v)) {
+#if ASA_RESOLUTION
+      if (xres > EPS_DOUBLE) {
+        ;
+      } else {
+#endif /* ASA_RESOLUTION */
+        if (x < min_parameter_v + HALF)
+          x = min_parameter_v + HALF + (double) EPS_DOUBLE;
+        if (x > max_parameter_v - HALF)
+          x = max_parameter_v - HALF + (double) EPS_DOUBLE;
+
+        if (x + HALF > ZERO) {
+          x = (double) ((LONG_INT) (x + HALF));
+        } else {
+          x = (double) ((LONG_INT) (x - HALF));
+        }
+        if (x > parameter_maximum[index_v])
+          x = parameter_maximum[index_v];
+        if (x < parameter_minimum[index_v])
+          x = parameter_minimum[index_v];
+      }
+#if ASA_RESOLUTION
+    }
+    if (xres > EPS_DOUBLE) {
+      if (x < min_parameter_v + xres / TWO)
+        x = min_parameter_v + xres / TWO + (double) EPS_DOUBLE;
+      if (x > max_parameter_v - xres / TWO)
+        x = max_parameter_v - xres / TWO + (double) EPS_DOUBLE;
+
+      if (x > parameter_maximum[index_v])
+        x = parameter_maximum[index_v];
+      if (x < parameter_minimum[index_v])
+        x = parameter_minimum[index_v];
+    }
+#endif /* ASA_RESOLUTION */
+
+    /* save the newly generated value */
+    gener_block_state[i_prll].parameter[index_v] = x;
+
+    if (OPTIONS->Sequential_Parameters >= 0)
+      break;
+  }
+  return (0);
+}
+
+#endif /* ASA_PARALLEL */
 
 /***********************************************************************
 * generate_asa_state
@@ -3716,7 +4375,6 @@ generate_new_state (user_random_generator,
 ***********************************************************************/
 #if HAVE_ANSI
 double
-
 generate_asa_state (double (*user_random_generator) (LONG_INT *),
                     LONG_INT * seed, double *temp)
 #else
@@ -3746,7 +4404,6 @@ generate_asa_state (user_random_generator, seed, temp)
 ***********************************************************************/
 #if HAVE_ANSI
 void
-
 accept_new_state (double (*user_random_generator) (LONG_INT *),
                   LONG_INT * seed,
                   double *parameter_minimum,
@@ -3769,7 +4426,6 @@ accept_new_state (double (*user_random_generator) (LONG_INT *),
                   USER_DEFINES * OPTIONS)
 #else
 void
-
 accept_new_state (user_random_generator,
                   seed,
                   parameter_minimum,
@@ -3840,11 +4496,11 @@ accept_new_state (user_random_generator,
   if (OPTIONS->Sequential_Parameters >= 0) {
     /* ignore parameters with too small a range */
     if (!PARAMETER_RANGE_TOO_SMALL (OPTIONS->Sequential_Parameters))
-      ++index_parameter_generations[OPTIONS->Sequential_Parameters];
+      ++(index_parameter_generations[OPTIONS->Sequential_Parameters]);
   } else {
     VFOR (index_v) {
       if (!PARAMETER_RANGE_TOO_SMALL (index_v))
-        ++index_parameter_generations[index_v];
+        ++(index_parameter_generations[index_v]);
     }
   }
 
@@ -3862,9 +4518,9 @@ accept_new_state (user_random_generator,
       OPTIONS->Cost_Acceptance_Flag = FALSE;
     }
   } else {
-    OPTIONS->Acceptance_Test (current_generated_state->cost,
-                              parameter_minimum,
-                              parameter_maximum, number_parameters, OPTIONS);
+    OPTIONS->Acceptance_Fit (current_generated_state->cost,
+                             parameter_minimum,
+                             parameter_maximum, number_parameters, OPTIONS);
     if (OPTIONS->User_Acceptance_Flag == TRUE) {
       unif_test = ZERO;
       OPTIONS->User_Acceptance_Flag = FALSE;
@@ -4035,7 +4691,6 @@ accept_new_state (user_random_generator,
 ***********************************************************************/
 #if HAVE_ANSI
 void
-
 reanneal (double *parameter_minimum,
           double *parameter_maximum,
           double *tangents,
@@ -4054,7 +4709,6 @@ reanneal (double *parameter_minimum,
           STATE * best_generated_state, USER_DEFINES * OPTIONS)
 #else
 void
-
 reanneal (parameter_minimum,
           parameter_maximum,
           tangents,
@@ -4310,7 +4964,6 @@ reanneal (parameter_minimum,
 #if HAVE_ANSI
 void
 cost_derivatives (double (*user_cost_function)
-
                    
                   (double *, double *, double *, double *, double *,
                    ALLOC_INT *, int *, int *, int *, USER_DEFINES *),
@@ -4325,7 +4978,6 @@ cost_derivatives (double (*user_cost_function)
                   USER_DEFINES * OPTIONS)
 #else
 void
-
 cost_derivatives (user_cost_function,
                   parameter_minimum,
                   parameter_maximum,
@@ -4417,7 +5069,7 @@ cost_derivatives (user_cost_function,
     ++(*number_invalid_generated_states);
 
   if (OPTIONS->User_Tangents == TRUE) {
-    *valid_state_generated_flag = FALSE;
+    *valid_state_generated_flag = -1;
 #if USER_ACCEPTANCE_TEST
     OPTIONS->User_Acceptance_Flag = TRUE;
     OPTIONS->Cost_Acceptance_Flag = FALSE;
@@ -5009,11 +5661,10 @@ cost_derivatives (user_cost_function,
 
 /***********************************************************************
 * asa_test_asa_options
-*       Tests user's selected options
+*       Fits user's selected options
 ***********************************************************************/
 #if HAVE_ANSI
 int
-
 asa_test_asa_options (LONG_INT * seed,
                       double *parameter_initial_final,
                       double *parameter_minimum,
@@ -5027,7 +5678,6 @@ asa_test_asa_options (LONG_INT * seed,
                       FILE * ptr_asa_out, USER_DEFINES * OPTIONS)
 #else
 int
-
 asa_test_asa_options (seed,
                       parameter_initial_final,
                       parameter_minimum,
@@ -5484,6 +6134,12 @@ asa_test_asa_options (seed,
     print_string (ptr_asa_out, exit_msg);
     ++invalid;
   }
+  if (ASA_FUZZY_PRINT != FALSE && ASA_FUZZY_PRINT != TRUE) {
+    strcpy (exit_msg,
+            "*** ASA_FUZZY_PRINT != FALSE && ASA_FUZZY_PRINT != TRUE ***");
+    print_string (ptr_asa_out, exit_msg);
+    ++invalid;
+  }
   if (FITLOC != FALSE && FITLOC != TRUE) {
     strcpy (exit_msg, "*** FITLOC != FALSE && FITLOC != TRUE ***");
     print_string (ptr_asa_out, exit_msg);
@@ -5593,6 +6249,12 @@ asa_test_asa_options (seed,
     print_string (ptr_asa_out, exit_msg);
     ++invalid;
   }
+  if (USER_ASA_USR_OUT != FALSE && USER_ASA_USR_OUT != TRUE) {
+    strcpy (exit_msg,
+            "*** USER_ASA_USR_OUT != FALSE && USER_ASA_USR_OUT != TRUE ***");
+    print_string (ptr_asa_out, exit_msg);
+    ++invalid;
+  }
   if (ASA_PRINT_INTERMED != FALSE && ASA_PRINT_INTERMED != TRUE) {
     strcpy (exit_msg,
             "*** ASA_PRINT_INTERMED != FALSE && ASA_PRINT_INTERMED != TRUE ***");
@@ -5626,8 +6288,8 @@ asa_test_asa_options (seed,
     print_string (ptr_asa_out, exit_msg);
     ++invalid;
   }
-  if (OPTIONS->Limit_Invalid_Generated_States < 0) {
-    strcpy (exit_msg, "*** Limit_Invalid_Generated_States < 0 ***");
+  if (OPTIONS->Limit_Invalid_Generated_States < -1) {
+    strcpy (exit_msg, "*** Limit_Invalid_Generated_States < -1 ***");
     print_string (ptr_asa_out, exit_msg);
     ++invalid;
   }
@@ -5835,8 +6497,8 @@ asa_test_asa_options (seed,
   }
 #endif
 #if USER_ACCEPTANCE_TEST
-  if (OPTIONS->Acceptance_Test == NULL) {
-    strcpy (exit_msg, "*** Acceptance_Test == NULL ***");
+  if (OPTIONS->Acceptance_Fit == NULL) {
+    strcpy (exit_msg, "*** Acceptance_Fit == NULL ***");
     print_string (ptr_asa_out, exit_msg);
     ++invalid;
   }
@@ -5901,7 +6563,7 @@ asa_test_asa_options (seed,
       ++invalid;
     }
   }
-#endif
+#endif /* ASA_QUEUE */
 #if ASA_RESOLUTION
   if (OPTIONS->Coarse_Resolution == NULL) {
     strcpy (exit_msg, "*** Coarse_Resolution == NULL ***");
@@ -5925,18 +6587,17 @@ asa_test_asa_options (seed,
     print_string (ptr_asa_out, exit_msg);
     ++invalid;
   }
-#endif
+#endif /* ASA_PARALLEL */
 
   return (invalid);
 }
 
 /***********************************************************************
 * cost_function_test
-*       Tests user's returned cost function values and parameters
+*       Fits user's returned cost function values and parameters
 ***********************************************************************/
 #if HAVE_ANSI
 int
-
 cost_function_test (double cost,
                     double *parameter,
                     double *parameter_minimum,
@@ -5944,7 +6605,6 @@ cost_function_test (double cost,
                     ALLOC_INT * number_parameters, double *xnumber_parameters)
 #else
 int
-
 cost_function_test (cost,
                     parameter,
                     parameter_minimum, parameter_maximum,
@@ -5996,9 +6656,11 @@ print_string (ptr_asa_out, string)
 {
 #if INCL_STDOUT
   printf ("\n\n%s\n\n", string);
+  fflush (stdout);
 #endif /* INCL_STDOUT */
 #if ASA_PRINT
   fprintf (ptr_asa_out, "\n\n%s\n\n", string);
+  fflush (ptr_asa_out);
 #else
 #endif
 }
@@ -6028,6 +6690,7 @@ print_string_index (ptr_asa_out, string, index)
   printf ("\n\n%s index = %ld\n\n", string, index);
 #endif /* INT_LONG */
 #endif /* INT_ALLOC */
+  fflush (stdout);
 #endif /* INCL_STDOUT */
 
 #if ASA_PRINT
@@ -6040,6 +6703,7 @@ print_string_index (ptr_asa_out, string, index)
   fprintf (ptr_asa_out, "\n\n%s index = %d\n\n", string, index);
 #endif /* INT_LONG */
 #endif /* INT_ALLOC */
+  fflush (ptr_asa_out);
 #else /* ASA_PRINT */
   ;
 #endif /* ASA_PRINT */
@@ -6052,7 +6716,6 @@ print_string_index (ptr_asa_out, string, index)
 ***********************************************************************/
 #if HAVE_ANSI
 void
-
 print_state (double *parameter_minimum,
              double *parameter_maximum,
              double *tangents,
@@ -6071,7 +6734,6 @@ print_state (double *parameter_minimum,
              FILE * ptr_asa_out, USER_DEFINES * OPTIONS)
 #else
 void
-
 print_state (parameter_minimum,
              parameter_maximum,
              tangents,
@@ -6336,6 +6998,7 @@ print_asa_options (ptr_asa_out, OPTIONS)
   fprintf (ptr_asa_out, "ASA_QUEUE = %d\n", (int) ASA_QUEUE);
   fprintf (ptr_asa_out, "ASA_RESOLUTION = %d\n", (int) ASA_RESOLUTION);
   fprintf (ptr_asa_out, "ASA_FUZZY = %d\n", (int) ASA_FUZZY);
+  fprintf (ptr_asa_out, "ASA_FUZZY_PRINT = %d\n", (int) ASA_FUZZY_PRINT);
   fprintf (ptr_asa_out, "FITLOC = %d\n", (int) FITLOC);
   fprintf (ptr_asa_out, "FITLOC_ROUND = %d\n", (int) FITLOC_ROUND);
   fprintf (ptr_asa_out, "FITLOC_PRINT = %d\n", (int) FITLOC_PRINT);
@@ -6353,6 +7016,7 @@ print_asa_options (ptr_asa_out, OPTIONS)
   fprintf (ptr_asa_out, "ASA_OUT = %s\n", ASA_OUT);
 #endif
   fprintf (ptr_asa_out, "USER_ASA_OUT = %d\n", (int) USER_ASA_OUT);
+  fprintf (ptr_asa_out, "USER_ASA_USR_OUT = %d\n", (int) USER_ASA_USR_OUT);
   fprintf (ptr_asa_out, "ASA_PRINT_INTERMED = %d\n",
            (int) ASA_PRINT_INTERMED);
   fprintf (ptr_asa_out, "ASA_PRINT_MORE = %d\n", (int) ASA_PRINT_MORE);
@@ -6443,11 +7107,11 @@ print_asa_options (ptr_asa_out, OPTIONS)
 ***********************************************************************/
 #if HAVE_ANSI
 void
-print_time (char *message, FILE * ptr_asa_out)
+print_time (const char *message, FILE * ptr_asa_out)
 #else
 void
 print_time (message, ptr_asa_out)
-     char *message;
+     const char *message;
      FILE *ptr_asa_out;
 #endif /* HAVE_ANSI */
 {
@@ -6471,12 +7135,12 @@ print_time (message, ptr_asa_out)
 ***********************************************************************/
 #if HAVE_ANSI
 void
-aux_print_time (struct timeval *time, char *message, FILE * ptr_asa_out)
+aux_print_time (struct timeval *time, const char *message, FILE * ptr_asa_out)
 #else
 void
 aux_print_time (time, message, ptr_asa_out)
      struct timeval *time;
-     char *message;
+     const char *message;
      FILE *ptr_asa_out;
 #endif /* HAVE_ANSI */
 {

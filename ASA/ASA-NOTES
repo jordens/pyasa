@@ -1,11 +1,11 @@
 /***********************************************************************
 * Adaptive Simulated Annealing (ASA)
-* Lester Ingber <ingber@ingber.com>
-* Copyright (c) 1987-2012 Lester Ingber.  All Rights Reserved.
-* The ASA-LICENSE file must be included with ASA code.
+* Lester Ingber <lester@ingber.com>
+* Copyright (c) 1987-2021 Lester Ingber.  All Rights Reserved.
+* ASA-LICENSE file has the license that must be included with ASA code.
 ***********************************************************************/
 
-$Id: ASA-NOTES,v 28.12 2012/07/02 23:58:48 ingber Exp ingber $
+$Id: ASA-NOTES,v 30.43 2021/01/01 16:54:05 ingber Exp ingber $
 
 ========================================================================
 			CONTENTS (Search on these words)
@@ -338,6 +338,18 @@ numbers of generated states amassed during annealing, respectively.
 
 ========================================================================
 	@@Equality and Inequality Constraints
+
+15 Jan 15
+
+Hime Aguiar and his colleagues, who have contributed ASA_FUZZY to ASA,
+have developed an procedure to develop existence criteria for when an
+N-dimensional space constrained search with p equality constraints
+can be developed into an effective N-p dimensional search, when the
+feasible domain can be modelled by a smooth submanifold defined by
+equality constraints expressions.  In some cases the existence proof
+presents numerical procedures for solution of the N-p dimensional space.
+See the paper cited in https://www.ingber.com/asa_papers.html that references
+http://dx.doi.org/10.1016/j.ins.2014.12.032 .
 
 25 Jul 11
 
@@ -692,7 +704,7 @@ Perhaps set QUENCH_PARAMETERS_SCALE and QUENCH_COST_SCALE to FALSE
 
 		Program Options
 set Curvature_0 to TRUE
-decrease Temperature_Ratio_Scale
+increase Temperature_Ratio_Scale (smaller negative exponent)
 increase Cost_Parameter_Scale_Ratio
 increase Maximum_Cost_Repeat
 decrease Acceptance_Frequency_Modulus

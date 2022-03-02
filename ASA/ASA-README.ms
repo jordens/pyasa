@@ -3,12 +3,12 @@
 .de Co
 /******************************************************************
 * Adaptive Simulated Annealing (ASA)
-* Lester Ingber <ingber@ingber.com>
-* Copyright \(co 1987-2012 Lester Ingber.  All Rights Reserved.
-* The ASA\-LICENSE file must be included with ASA code.
+* Lester Ingber <lester@ingber.com>
+* Copyright \(co 1987-2021 Lester Ingber.  All Rights Reserved.
+* ASA-LICENSE file has the license that must be included with ASA code.
 ******************************************************************/
 .sp
-$Id: ASA-README.ms,v 28.12 2012/07/02 23:58:48 ingber Exp ingber $
+$Id: ASA-README.ms,v 30.43 2021/01/01 16:54:06 ingber Exp ingber $
 ..
 .\"
 .\" To avoid creating an extra macro file just for the references,
@@ -99,9 +99,9 @@ ADAPTIVE SIMULATED ANNEALING (ASA) \(co
 .sp
 Lester Ingber
 .sp
-ingber@ingber.com
+lester@ingber.com
 .br
-ingber@alumni.caltech.edu
+ingber@caa.caltech.edu
 .ce 0
 .if t \{\
 .EQ
@@ -146,10 +146,12 @@ ASA\-LICENSE
 .XS
 \*(SN 	ASA\-LICENSE
 .XE
-.PP
+.LP
 This Adaptive Simulated Annealing (ASA) code is being made available
 under conditions specified in the ASA\-LICENSE file that comes with this
 code, and is owned by Lester Ingber.
+Reference is properly given to the internet archive that first published
+the code.
 .[
 %A L. Ingber
 %R Global optimization C-code
@@ -157,82 +159,27 @@ code, and is owned by Lester Ingber.
 %C Pasadena, CA
 %T Adaptive Simulated Annealing (ASA)
 %D 1993
-%O URL http://www.ingber.com/#ASA\-CODE
+%O URL https://www.ingber.com/#ASA\-CODE
 .]
-Reference is properly given to the internet archive that first published
-the code.  Please read the copy of the public ASA\-LICENSE contained in the
-ASA directory.  Its intent is to protect the integrity of the algorithm,
-promote widespread usage, and require reference to current source code.
-The ASA\-LICENSE is so short it is repeated here:
-.QS
-.hlm 0
-.LP
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-.SH
-.ce
-CONDITIONS
-.LP
-1. Redistributions of ASA source code must retain the above copyright
-notice, this list of conditions, and the following disclaimer.
-.LP
-2. Redistributions in binary form must contain the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
-.LP
-3. All modifications to the source code must be clearly marked as
-such.  Binary redistributions based on modified source code must be
-clearly marked as modified versions in the documentation and/or other
-materials provided with the distribution.
-.LP
-4. Notice must be given of the location of the availability of the
-unmodified current source code, e.g.,
-.in +8n
-http://www.ingber.com/
-.in -8n
-in the documentation and/or other materials provided with the
-distribution or publication.  ASA also is listed at
-.in +8n
-http://alumni.caltech.edu/~ingber
-.br
-http://asa-caltech.sourceforge.net
-.br
-https://code.google.com/p/adaptive-simulated-annealing
-.in -8n
-.LP
-5. The name of Lester Ingber may not be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-.SH
-.ce
-DISCLAIMER
-.LP
-This software is provided by Lester Ingber and contributors \*Qas is\*U and
-any expressed or implied warranties, including, but not limited to, the
-implied warranties of merchantability and fitness for a particular
-purpose are disclaimed.  In no event shall Lester Ingber or
-contributors be liable for any direct, indirect, incidental, special,
-exemplary, or consequential damages (including, but not limited to,
-procurement of substitute goods or services; loss of use, data, or
-profits; or business interruption) however caused and on any theory of
-liability, whether in contract, strict liability, or tort (including
-negligence or otherwise) arising in any way out of the use of this
-software, even if advised of the possibility of such damage.
-.QE
-.NH 1
-Lester Ingber Research Terms of Use
-.XS
-\*(SN 	Lester Ingber Research Terms of Use
-.XE
 .PP
-Lester Ingber Research (LIR) develops projects in several areas of expertise
-documented in the ingber.com InterNet archive, e.g., this ASA code.
-Information on terms of use is in the file
-http://www.ingber.com/ingber_terms.html under WWW.
+Please read the copy of the public ASA\-LICENSE contained in
+the ASA directory, which is compliant with The Open Source Initiative
+BSD 3-Clause License at https://opensource.org/licenses/BSD-3-Clause .
+Its intent is to protect the integrity of the algorithm and promote
+widespread usage.
+.NH 1
+Physical Studies Institute LLC Terms of Use
+.XS
+\*(SN 	Physical Studies Institute LLC Terms of Use
+.XE
+.LP
+Physical Studies Institute LLC (PSI) develops projects in several
+areas of expertise documented in the www.ingber.com InterNet archive,
+e.g., this ASA code.  Information on terms of use is in the file
+https://www.ingber.com/ingber_terms.html under WWW.
 .PP
 There is no charge for downloading and using codes or files in the
-ingber.com archive.  In general, I have retained all rights such as
+www.ingber.com archive.  In general, I have retained all rights such as
 copyrights to these codes and files, but they may be freely used by any
 person or group independent of affiliations, e.g., independent of
 academic or commercial affiliation.
@@ -245,6 +192,7 @@ Documentation
 .XS
 \*(SN 	Documentation
 .XE
+.LP
 .NH 2
 Table of Contents/Index
 .XS
@@ -317,7 +265,7 @@ this file, so you may view it under a local browser if you download the
 HTML source file.
 .PP
 The background image file asa_back.jpg referenced in ASA\-README.html can
-be downloaded as http://www.ingber.com/asa_back.jpg from the ASA archive.
+be downloaded as https://www.ingber.com/asa_back.jpg from the ASA archive.
 .NH 2
 Additional Documentation
 .XS
@@ -334,11 +282,11 @@ your browser or editor.
 .PP
 There are three files in the ASA archive that should be considered as
 appendices to the ASA\-NOTES file:
-http://www.ingber.com/asa_contrib.txt,
-http://www.ingber.com/asa_examples.txt, and
-http://www.ingber.com/asa_papers.html under WWW.
+https://www.ingber.com/asa_contrib.txt,
+https://www.ingber.com/asa_examples.txt, and
+https://www.ingber.com/asa_papers.html under WWW.
 .PP
-The file http://www.ingber.com/asa_contrib.txt in the ASA archive contains
+The file https://www.ingber.com/asa_contrib.txt in the ASA archive contains
 some code contributed by users.  For example, references are giving to
 MATLAB and RLaB gateway routines to ASA (which include many important
 parts of the ASA user module), and to function support for ASA_PARALLEL.
@@ -349,24 +297,24 @@ project, including the RATFOR vfsr.r and vfsr_com.r code, subsequently
 compiled into FORTRAN to run on a Lawrence Livermore supercomputer.
 I do not support this old RATFOR code.
 .PP
-The file http://www.ingber.com/asa_examples.txt in the ASA archive
+The file https://www.ingber.com/asa_examples.txt in the ASA archive
 contains some example problems using ASA and some code to use in ASA.
 There is a CONTENTS of sections headers that can be used to search on
 topics in your browser or editor.  This file contains some problems
 optimized using ASA, which can provide immediate examples on how you
 can optimize your own problem.
 .PP
-The file http://www.ingber.com/asa_papers.html is an addendum to the
+The file https://www.ingber.com/asa_papers.html is an addendum to the
 ASA\-NOTES file in the ASA code, containing references to some patents
 and papers using ASA or its precursor VFSR.
 .PP
 The file asa_new.txt in the ASA archive is a list of major changes in ASA.
 The files ASA\-README.txt, ASA\-README.ps and ASA\-README.pdf included
 with the code also are available independently as
-http://www.ingber.com/ASA\-README.txt,
-http://www.ingber.com/ASA\-README.ps.gz,
-http://www.ingber.com/ASA\-README.html,
-http://www.ingber.com/ASA\-README.pdf.
+https://www.ingber.com/ASA\-README.txt ,
+https://www.ingber.com/ASA\-README.ps.gz ,
+https://www.ingber.com/ASA\-README.html ,
+https://www.ingber.com/ASA\-README.pdf .
 .PP
 There is a set of ASA_TEMPLATE's available in the ASA\-Makefile and in the
 user module (some also in the asa module) to illustrate use of
@@ -387,10 +335,10 @@ at the location specified, e.g.,
 .in 0
 .fi
 .PP
-See http://www.ingber.com/utils_file_formats.txt for some links to
+See https://www.ingber.com/utils_file_formats.txt for some links to
 information on gzip, PostScript, PDF, tar, and shar utilities.  The file
 utils_code.txt in that directory gives short statements describing these
-files, which may be accessed as http://www.ingber.com/utils_code.html
+files, which may be accessed as https://www.ingber.com/utils_code.html
 under WWW.
 .NH 2
 Use of Documentation for Tuning
@@ -429,10 +377,10 @@ to examine the output of ASA at several stages of sampling, to see
 if changes in parameter and temperatures are reasonably correlated to
 changes in the cost function.  Examples of useful OPTIONS and code that
 often give quick changes in tuning in some problems are in the file
-http://www.ingber.com/asa_examples.txt under WWW.  Some of the reprint
-files of published papers in the ingber.com provide other examples in
+https://www.ingber.com/asa_examples.txt under WWW.  Some of the reprint
+files of published papers in www.ingber.com provide other examples in
 harder systems, and perhaps you might find some examples of harder systems
-using ASA similar to your own in http://www.ingber.com/asa_papers.html
+using ASA similar to your own in https://www.ingber.com/asa_papers.html
 under WWW.  This is the best way to add some Art to the Science of
 annealing.
 .PP
@@ -464,15 +412,17 @@ ingber.com
 .XE
 .PP
 The latest Adaptive Simulated Annealing (ASA) code and some related
-papers can be accessed from the home page http://www.ingber.com/ under
+papers can be accessed from the home page https://www.ingber.com/ under
 WWW.
 .PP
-The home page http://www.ingber.com/ under WWW, and the
-ASCII version 00index.txt, contain an index of the other files.
+The home page https://www.ingber.com/ ( https://www.ingber.com/ ) under
+WWW (SSL WWW), and the ASCII version https://www.ingber.com/00index.txt
+( https://www.ingber.com/00index_s.txt ), contain an index of the
+other files.
 .PP
 The latest version of ASA, ASA\-x.y (x and y are version numbers),
-can be obtained in two formats: http://www.ingber.com/ASA.tar.gz and
-http://www.ingber.com/ASA.zip.  The tar'd versions is compressed in gzip
+can be obtained in two formats: https://www.ingber.com/ASA.tar.gz and
+https://www.ingber.com/ASA.zip.  The tar'd versions is compressed in gzip
 format, and ASA.tar.gz.  In the zip'd version, ASA.zip, all files have
 been processed for DOS format.
 .PP
@@ -480,7 +430,7 @@ Patches ASA\-diff\-x1.y1\-x2.y2 up to the present version can be
 prepared if a good case for doing so is presented, e.g. to facilitate
 updating your own modified codes.  These may be concatenated as
 required before applying.  If you require a specific patch, contact
-ingber@ingber.com.
+lester@ingber.com.
 .NH 2
 Electronic Mail
 .XS
@@ -566,7 +516,7 @@ global optimization on multivariate nonlinear stochastic systems.
 %V 12
 %P 967-973
 %D 1989
-%O URL http://www.ingber.com/asa89_vfsr.pdf
+%O URL https://www.ingber.com/asa89_vfsr.pdf
 .]
 The first published use of VFSR for a complex systems was in combat
 analysis, using a model of combat first developed in 1986, and then
@@ -581,7 +531,7 @@ spanned 1988-1993.
 %C Washington, D.C.
 %D 1993
 %P 117-149
-%O ISBN 1-56347-068-3.  URL http://www.ingber.com/combat93_c3sci.pdf
+%O ISBN 1-56347-068-3.  URL https://www.ingber.com/combat93_c3sci.pdf
 .]
 The first applications to combat analysis used code written in RATFOR
 and converted into FORTRAN.  Other applications since then have used
@@ -599,27 +549,27 @@ use of long descriptive names, and made publicly available as version
 %C San Antonio, TX
 %T Very Fast Simulated Reannealing (VFSR)
 %D 1992
-%O URL ftp://ringer.cs.utsa.edu/pub/rosen/vfsr.tar.gz
 .]
 and copies were placed in NETLIB and STATLIB.
 .PP
 Beginning in January 93, many adaptive features were developed, largely
 in response to users' requests, leading to this ASA code.  Until 1996,
-ASA was located at http://www.alumni.caltech.edu/~ingber/.  Pointers
+ASA was located at alumni.caltech.edu .  Pointers
 were placed in NETLIB and STATLIB to this location.  ASA versions 1.1
 through 5.13 retained the GPL, but subsequent versions through this one
 have incorporated a simpler ASA\-LICENSE, based in part on a University
 of California license, that protects the integrity of the algorithm,
 promotes widespread usage, and requires reference to current source
-code.  As the archive grew, more room and maintenance was required,
-and in February 1996 the site was moved to the present ingber.com
+code.
+Beginning with version 29.1 the ASA\-LICENSE was replaced with
+The Open Source Initiative BSD 3-Clause License.
+.PP
+As the archive grew, more room and maintenance was required,
+and in February 1996 the site was moved to the present www.ingber.com
 location.  Pointers were placed in the Caltech site to this location.
-http://alumni.caltech.edu/~ingber is the mirror homepage for the ASA
-site.
 .PP
 Mirrors of ASA (which may not always be current) are listed at
-http://asa-caltech.sourceforge.net (http://asa-caltech.sf.net)
-since January 2007,
+https://sourceforge.net/projects/asa-caltech/ since January 2007,
 and at
 https://code.google.com/p/adaptive-simulated-annealing
 since in March 2001.
@@ -627,7 +577,7 @@ FTP access to all archives was discontinued in July 2010.
 .PP
 In February 2011, beginning with Version 28.1, the License
 was simplified and brought into the framework described on
-http://en.wikipedia.org/wiki/BSD_License as the New BSD License.
+https://en.wikipedia.org/wiki/BSD_License as the New BSD License.
 .PP
 ASA has been examined in the context of a review of methods of simulated
 annealing using annealing versus quenching (faster temperature schedules
@@ -640,7 +590,7 @@ on modifying ASA with QUENCH OPTIONS).
 %V 18
 %D 1993
 %P 29-57
-%O URL http://www.ingber.com/asa93_sapvt.pdf
+%O URL https://www.ingber.com/asa93_sapvt.pdf
 .]
 A paper has indicated how this technique can be enhanced by combining
 it with some other powerful algorithms, e.g., to produce an algorithm
@@ -653,7 +603,7 @@ of neocortical interactions
 %V 45
 %P R2183-R2186
 %D 1992
-%O URL http://www.ingber.com/smni92_mnn.pdf
+%O URL https://www.ingber.com/smni92_mnn.pdf
 .]
 ASA is now used world\-wide across many disciplines,
 .[
@@ -673,7 +623,7 @@ ASA is now used world\-wide across many disciplines,
 %D 1996
 %O This was an invited paper to a special issue of the Polish journal
 Control and Cybernetics on \*QSimulated Annealing Applied to Combinatorial
-Optimization.\*U  URL http://www.ingber.com/asa96_lessons.pdf
+Optimization.\*U  URL https://www.ingber.com/asa96_lessons.pdf
 .]
 .[
 %A L. Ingber
@@ -683,17 +633,18 @@ in nonlinear stochastic systems
 %V 27
 %P 9-31
 %D 1998
-%O URL http://www.ingber.com/path98_datamining.pdf
+%O URL https://www.ingber.com/path98_datamining.pdf
 .]
 .[
 %A L. Ingber
 %T Adaptive Simulated Annealing (ASA) and Path-Integral
 (PATHINT) Algorithms: Generic Tools for Complex Systems
 %R ASA-PATHINT Lecture Plates
-%I Lester Ingber Research
+%I Physical Studies Institute
+%C Ashland, OR
 %D 2001
 %O Invited talk U Calgary, Canada, April 2001.
-URL http://www.ingber.com/asa01_lecture.pdf
+URL https://www.ingber.com/asa01_lecture.pdf
 .]
 including specific disciplines such as finance,
 .[
@@ -703,7 +654,7 @@ including specific disciplines such as finance,
 %V 42
 %D 1990
 %P 7057-7064
-%O URL http://www.ingber.com/markets90_interest.pdf
+%O URL https://www.ingber.com/markets90_interest.pdf
 .]
 .[
 %A L. Ingber
@@ -713,7 +664,7 @@ Applications to optimized trading
 %V 23
 %P 101-121
 %D 1996
-%O URL http://www.ingber.com/markets96_trading.pdf
+%O URL https://www.ingber.com/markets96_trading.pdf
 .]
 .[
 %A L. Ingber
@@ -729,7 +680,7 @@ Applications to optimized trading
 %D 1996
 %O Invited paper to the 1996 International Conference on Neural Information
 Processing (ICONIP'96), Hong Kong, 24-27 September 1996.
-ISBN 981 3083-05-0.  URL http://www.ingber.com/markets96_momenta.pdf
+ISBN 981 3083-05-0.  URL https://www.ingber.com/markets96_momenta.pdf
 .]
 .[
 %A L. Ingber
@@ -741,7 +692,7 @@ ISBN 981 3083-05-0.  URL http://www.ingber.com/markets96_momenta.pdf
 %P 776-790
 %J IEEE Trans. Neural Networks
 %O Invited paper for special issue on Neural Networks in
-Financial Engineering. URL http://www.ingber.com/markets01_optim_trading.pdf
+Financial Engineering. URL https://www.ingber.com/markets01_optim_trading.pdf
 .]
 .[
 %A L. Ingber
@@ -757,7 +708,7 @@ of markets
 %C Singapore
 %D 2003
 %P 305-356
-%O Invited paper. URL http://www.ingber.com/markets03_automated.pdf
+%O Invited paper. URL https://www.ingber.com/markets03_automated.pdf
 .]
 .[
 %A A.F. Atiya
@@ -768,18 +719,28 @@ of markets
 %I IEEE CAS
 %C Cairo, Egypt
 %D 2003
-%O URL http://www.ingber.com/asa03_reinforce.pdf
+%O URL https://www.ingber.com/asa03_reinforce.pdf
 .]
 .[
 %A L. Ingber
 %T Statistical Mechanics of Financial Markets (SMFM):
 Applications to Trading Indicators and Options
 %R SMFM Lecture Plates
-%I Lester Ingber Research
+%I Physical Studies Institute
+%C Ashland, OR
 %D 2001
 %O Invited talk U Calgary, Canada, April 2001. Invited talk U
 Florida, Gainesville, April 2002. Invited talk Tulane U, New
-Orleans, January 2003. URL http://www.ingber.com/markets01_lecture.pdf
+Orleans, January 2003. URL https://www.ingber.com/markets01_lecture.pdf
+.]
+.[
+%A L. Ingber
+%T Developing bid-ask probabilities for high-frequency trading
+%R Report 2019:DBAP
+%I Physical Studies Institute
+%C Ashland, OR
+%D 2019
+%O URL https://www.ingber.com/markets19_bid_ask_prob.pdf
 .]
 neuroscience,
 .[
@@ -790,7 +751,7 @@ A scaling paradigm applied to electroencephalography
 %V 44
 %P 4017-4060
 %D 1991
-%O URL http://www.ingber.com/smni91_eeg.pdf
+%O URL https://www.ingber.com/smni91_eeg.pdf
 .]
 .[
 %A L. Ingber
@@ -800,7 +761,7 @@ Canonical momenta indicators of EEG
 %V 55
 %P 4578-4593
 %D 1997
-%O URL http://www.ingber.com/smni97_cmi.pdf
+%O URL https://www.ingber.com/smni97_cmi.pdf
 .]
 .[
 %A L. Ingber
@@ -810,24 +771,25 @@ Training and testing canonical momenta indicators of EEG
 %V 27
 %P 33-64
 %D 1998
-%O URL http://www.ingber.com/smni98_cmi_test.pdf
+%O URL https://www.ingber.com/smni98_cmi_test.pdf
 .]
 .[
 %A L. Ingber
 %T Statistical Mechanics of Neocortical Interactions (SMNI):
 Multiple Scales of Short-Term Memory and EEG Phenomena
 %R SMNI Lecture Plates
-%I Lester Ingber Research
+%I Physical Studies Institute
+%C Ashland, OR
 %D 2001
 %O Invited talk U Calgary, Canada, April 2001.
-URL http://www.ingber.com/smni01_lecture.pdf
+URL https://www.ingber.com/smni01_lecture.pdf
 .]
 .[
 %A L. Ingber
 %T Statistical mechanics of neocortical interactions (SMNI): Testing theories with multiple imaging data
 %J NeuroQuantology Journal
 %D 2008
-%O Invited paper. http://www.ingber.com/smni08_tt.pdf
+%O Invited paper. https://www.ingber.com/smni08_tt.pdf
 .]
 .[
 %A L. Ingber
@@ -837,7 +799,47 @@ URL http://www.ingber.com/smni01_lecture.pdf
 %N 4
 %P 500-529
 %D 2009
-%O URL http://www.ingber.com/smni09_nonlin_column_eeg.pdf
+%O URL https://www.ingber.com/smni09_nonlin_column_eeg.pdf
+.]
+.[
+%A L. Ingber
+%A M. Pappalepore
+%A R.R. Stesiak
+%J Journal of Theoretical Biology
+%T Electroencephalographic field influence on calcium momentum waves
+%D 2014
+%O URL https://www.ingber.com/smni14_eeg_ca.pdf and https://dx.doi.org/10.1016/j.jtbi.2013.11.002
+.]
+.[
+%A L. Ingber
+%T Calculating consciousness correlates at multiple scales of neocortical interactions
+%B Horizons in Neuroscience Research
+%E A. Costa
+%E E. Villalba
+%I Nova
+%C Hauppauge, NY
+%D 2015
+%P 153-186
+%O ISBN: 978-1-63482-632-7. Invited paper. URL https://www.ingber.com/smni15_calc_conscious.pdf
+.]
+.[
+%A L. Ingber
+%J Journal of Theoretical Biology
+%T Statistical mechanics of neocortical interactions: Large-scale EEG influences on molecular processes
+%V 395
+%P 144-152
+%D 2016
+%O URL https://www.ingber.com/smni16_large-scale_molecular.pdf
+.]
+.[
+%A L. Ingber
+%T Quantum calcium-ion interactions with EEG
+%J Sci
+%V 1
+%N 7
+%D 2018
+%P 1-21
+%O URL https://www.ingber.com/smni18_quantumCaEEG.pdf and https://doi.org/10.3390/sci1010020
 .]
 and combat analyses.
 .[
@@ -851,7 +853,7 @@ exercise data
 %N 1
 %P 65-90
 %D 1991
-%O URL http://www.ingber.com/combat91_data.pdf
+%O URL https://www.ingber.com/combat91_data.pdf
 .]
 .[
 %A L. Ingber
@@ -862,7 +864,7 @@ exercise data
 %N 11
 %D 1991
 %P 99-127
-%O URL http://www.ingber.com/combat91_human.pdf
+%O URL https://www.ingber.com/combat91_human.pdf
 .]
 .[
 %A L. Ingber
@@ -873,7 +875,7 @@ exercise data
 %C Washington, D.C.
 %D 1993
 %P 117-149
-%O ISBN 1-56347-068-3. URL http://www.ingber.com/combat93_c3sci.pdf
+%O ISBN 1-56347-068-3. URL https://www.ingber.com/combat93_c3sci.pdf
 .]
 .[
 %A M. Bowman
@@ -884,25 +886,26 @@ Atlanta, GA
 %I Society for Computer Simulation
 %C San Diego, CA
 %D 1997
-%O URL http://www.ingber.com/combat97_cmi.pdf
+%O URL https://www.ingber.com/combat97_cmi.pdf
 .]
 .[
 %A L. Ingber
 %T Statistical Mechanics of Combat (SMC): Mathematical
 Comparison of Computer Models to Exercise Data
 %R SMC Lecture Plates
-%I Lester Ingber Research
+%I Physical Studies Institute
+%C Ashland, OR
 %D 2001
-%O URL http://www.ingber.com/combat01_lecture.pdf
+%O URL https://www.ingber.com/combat01_lecture.pdf
 .]
 .[
 %A L. Ingber
 %T Real Options for Project Schedules (ROPS)
 %R Report 2007:ROPS
 %D 2007
-%I Lester Ingber Research
+%I Physical Studies Institute
 %C Ashland, OR
-%O URL http://www.ingber.com/markets07_rops.pdf
+%O URL https://www.ingber.com/markets07_rops.pdf
 .]
 .[
 %A L. Ingber
@@ -918,9 +921,9 @@ sampling.
 %T Trading in Risk Dimensions (TRD)
 %R Report 2005:TRD
 %D 2005
-%I Lester Ingber Research
+%I Physical Studies Institute
 %C Ashland, OR
-%O URL http://www.ingber.com/markets05_trd.pdf
+%O URL https://www.ingber.com/markets05_trd.pdf
 .]
 .[
 %A L. Ingber
@@ -937,9 +940,9 @@ sampling.
 %T Ideas by Statistical Mechanics (ISM)
 %R Report 2006:ISM
 %D 2006
-%I Lester Ingber Research
+%I Physical Studies Institute
 %C Ashland, OR
-%O URL http://www.ingber.com/smni06_ism.pdf
+%O URL https://www.ingber.com/smni06_ism.pdf
 .]
 .[
 %A L. Ingber
@@ -953,7 +956,7 @@ sampling.
 .]
 .[
 %A L. Ingber
-%E J.R. Rabuñal
+%E J.R. Rabunal
 %E J. Dorado
 %E A.P. Pazos
 %T AI and Ideas by Statistical Mechanics (ISM)
@@ -977,9 +980,20 @@ sampling.
 %C New York
 %D 2012
 %P 33-61
-%O Invited Paper. URL http://www.ingber.com/asa11_options.pdf
+%O Invited Paper. URL https://www.ingber.com/asa11_options.pdf
 .]
-The http://www.ingber.com/asa_papers.html file in the ASA archive
+.[
+%A L. Ingber
+%T Forecasting COVID-19 with importance-sampling and path-integrals
+%R Report 2020:FCIP
+%D 2020
+%I Physical Studies Institute
+%C Ashland, OR
+%L Ingber:2020:FCIP
+%K 198004
+%O URL https://www.ingber.com/asa20_covid.pdf and https://doi.org/10.2139/ssrn.3691967
+.]
+The https://www.ingber.com/asa_papers.html file in the ASA archive
 contains references to some patents and papers using ASA and VFSR.
 .in 0
 .\"             Equations set only in PostScript\(rg ([g]troff)
@@ -1244,7 +1258,7 @@ Outline of Use
 .XS
 \*(SN 	Outline of Use
 .XE
-.PP
+.LP
 Set up the ASA interface: Your program should be divided into two basic
 modules.  (1) The user calling procedure, containing the cost function
 to be minimized (or its negative if you require a global maximum), is
@@ -1285,7 +1299,7 @@ ASA\-Makefile/Compilation Procedures
 \*(SN 	ASA\-Makefile/Compilation Procedures
 .nr Mc \*(SN
 .XE
-.PP
+.LP
 The ASA\-Makefile is intended to be a template for your own Makefile.
 For quick use, just copy this file to Makefile, which will be recognized
 by any standard make tool.
@@ -1345,7 +1359,7 @@ these guides as a template to use for your own cost function.
 The easiest way for many users to quickly use ASA likely is to invoke the
 COST_FILE, OPTIONS_FILE, and OPTIONS_FILE_DATA OPTIONS (the default),
 using the files asa_usr_cst.c and asa_opt as templates.  This is further
-described below and illustrated in the http://www.ingber.com/asa_examples.txt
+described below and illustrated in the https://www.ingber.com/asa_examples.txt
 file in the section Use of COST_FILE on Shubert Problem.
 .NH 2
 DLL ASA\-Makefile
@@ -1361,8 +1375,7 @@ Under Cygwin (cygwin.com), set ASA_LIB to TRUE and INCL_STDOUT to FALSE
 .in 0
 to produce a DLL to call asa_main() as a DLL function under windows.
 (Ignore any undefined references to _WinMain.)  Note that per instructions
-given in the ASA\-Makefile, -mno-cygwin -mrtd should be included in CFLAGS.
-If -mno-cygwin flag has been removed, use a mingw-targeted cross-compiler.
+given in the ASA\-Makefile, i686-pc-mingw32-gcc.exe should be used.
 .PP
 If paths are used to access files in code, under Windows use absolute
 paths with \*Q\\\\\*U (double back slash) to separate folders/directories,
@@ -1373,7 +1386,7 @@ Generic ASA Interfaces
 .XS
 \*(SN 	Generic ASA Interfaces
 .XE
-.PP
+.LP
 The sections above describe how to quickly adapt ASA for use in many
 problems.  However, complex projects often require sophisticated use of
 multiple languages to handle data and multiple algorithms.  ASA has many
@@ -1402,7 +1415,7 @@ ASA code to be called as a simple function.  Its sole parameter can be
 a struct defined by OPTIONAL_PTR_TYPE, e.g., OPTIONAL_PTR_TYPE PROJECT,
 defined in asa_usr_asa.h.  A small include file common to asa_usr_asa.h
 and to the larger complex project, e.g., project.h, is used to define
-the constituents of the the PROJECT struct.  As described above in the
+the constituents of the PROJECT struct.  As described above in the
 DLL ASA\-Makefile sub-Section of Section \n(Md, ASA_LIB can be used to create
 a DLL to be called by Windows programs.
 .PP
@@ -1442,7 +1455,7 @@ User Options
 .XS
 \*(SN 	User Options
 .XE
-.PP
+.LP
 Program Options, i.e., the USER_DEFINES typedef on the OPTIONS,
 USER_OPTIONS, RECUR_USER_OPTIONS, etc., are turned on during the
 running of asa\ ().  The DEFINE_OPTIONS are compiled in by the use of
@@ -1485,7 +1498,7 @@ Pre-Compile DEFINE_OPTIONS
 .XS
 \*(SN 		Pre-Compile DEFINE_OPTIONS
 .XE
-.LP
+.PP
 .NH 3
 USER_COST_FUNCTION=cost_function
 .XS
@@ -1581,7 +1594,7 @@ to copy the appropriate parameter list in asa_usr_cst.c just before the
 ASA_TEST problem to be sure of using the proper format expected by asa\ ()
 in asa.c.
 .PP
-The http://www.ingber.com/asa_examples.txt file contains a section
+The https://www.ingber.com/asa_examples.txt file contains a section
 Use of COST_FILE on Shubert Problem which illustrates the simple
 modifications of ASA required to use COST_FILE.
 .NH 3
@@ -1647,9 +1660,8 @@ TIME_STD=FALSE
 \*(SN 			TIME_STD=FALSE
 .XE
 .PP
-Some systems, e.g., hpux and Cygwin (with -mno-cygwin), use other
-Unix\-standard macros to access time.  If -mno-cygwin flag has been
-removed, use a mingw-targeted cross-compiler.  Setting TIME_STD=TRUE
+Some systems, e.g., hpux and Cygwin (with i686-pc-mingw32-gcc.exe),
+use other Unix\-standard macros to access time.  Setting TIME_STD=TRUE
 when using TIME_CALC=TRUE will use these time routines instead.
 .NH 3
 TIME_GETRUSAGE=TRUE
@@ -1659,10 +1671,9 @@ TIME_GETRUSAGE=TRUE
 .PP
 An additional module for using TIME_CALC set to TRUE, setting
 TIME_GETRUSAGE to FALSE, is more portable to compile across some
-platforms, e.g., Cygwin (with -mno-cygwin), but it can require
-different parameters for timing results.  If -mno-cygwin flag has
-been removed, use a mingw-targeted cross-compiler.  Comments have
-been placed in the code in asa.c.
+platforms, e.g., Cygwin (with i686-pc-mingw32-gcc.exe), but it can
+require different parameters for timing results.  Comments have been
+placed in the code in asa.c.
 .NH 3
 INT_LONG=TRUE
 .XS
@@ -1802,7 +1813,7 @@ system.  It is suggested that a trimmed cost function or data set be
 used to get a reasonable guess for a good set of Program Options.  ASA
 has demonstrated that it typically is quite robust under a given set of
 Program Options, so it might not make too much sense to spend lots of
-resources performing additional fine tuning of the these options.
+resources performing additional fine tuning of these options.
 Also, it is possible you might crash the code by permitting ranges of
 Program Options that cause your particular cost_function to return
 garbage to asa\ ().
@@ -1833,7 +1844,7 @@ is harder, requiring the finding of an optimal point and not an optimal
 region.  The code for that problem is given in asa_usr.c when
 ASA_TEST_POINT is set to TRUE (having the effect of setting COST_FILE
 to FALSE in asa_usr_asa.h).  The
-http://www.ingber.com/asa_examples.txt file illustrates how that
+https://www.ingber.com/asa_examples.txt file illustrates how that
 global minimum can be attained.
 .NH 3
 MY_TEMPLATE=TRUE
@@ -1906,7 +1917,7 @@ algorithms you might wish to choose for your system, e.g., creating a
 hybrid global\-local adaptive quenching search algorithm, e.g., using
 USER_REANNEAL_PARAMETERS described below.  Note that just using the
 quenching OPTIONS provided with ASA can be quite powerful, as
-demonstrated in the http://www.ingber.com/asa_examples.txt file.
+demonstrated in the https://www.ingber.com/asa_examples.txt file.
 .PP
 Setting QUENCH_PARAMETERS to TRUE can be extremely useful in very large
 parameter dimensions; see the ASA\-NOTES file under the section on Quenching.
@@ -2142,6 +2153,10 @@ test problem, assuming this were run several times with different
 random seeds for randflt in asa_usr.c.  Here, Asa_Data_Dbl [0] is used as
 a flag to print out Asa_Data_Dbl [1] in asa_usr.c, set to
 *best_number_generated_saved in asa.c.
+.PP
+If ASA_PARALLEL is TRUE, then N_Generated and *best_number_generated_saved
+will only be accurate within the scale of OPTIONS\->Gener_Block, as
+these are updated in the acceptance function.
 .NH 3
 OPTIONAL_DATA_INT=FALSE
 .XS
@@ -2183,7 +2198,7 @@ then multiple levels of recursion can each have their own defined
 information indexed to different elements of the array of structures of
 size Asa_Data_Dim_Ptr.
 .PP
-The http://www.ingber.com/asa_examples.txt file contains some guidance
+The https://www.ingber.com/asa_examples.txt file contains some guidance
 of the use of OPTIONAL_DATA_PTR and Asa_Data_Ptr.
 .NH 3
 OPTIONAL_PTR_TYPE=USER_TYPE
@@ -2508,6 +2523,25 @@ the top of your cost function.  Some examples of the format of lines in
 the comma-delimited asa_adaptive_options file are given just above the
 adaptive_options function in asa_usr.c.
 .NH 3
+ASA_BYPASS=FALSE
+.XS
+\*(SN 			ASA_BYPASS=FALSE
+.XE
+.PP
+In asa_usr.c ASA_BYPASS has been added to simply bypass asa().  At the
+top of asa_usr.c the trigger is
+.br
+#ifndef ASA_BYPASS
+.br
+#define ASA_BYPASS FALSE
+.br
+#endif
+.br
+which can be simply changed.  This can be useful to debug codes, to run
+the FITLOC simplex code after a good region is developed using asa(),
+etc. A nominal value of cost_value of 10000 has been set, which can
+easily be changed.
+.NH 3
 ASA_QUEUE=FALSE
 .XS
 \*(SN 			ASA_QUEUE=FALSE
@@ -2545,11 +2579,15 @@ stored parameter values, under the assumption that for most complex
 systems for which ASA_QUEUE=TRUE is useful, the bottleneck is in the
 evaluation of the cost functions.  If you think this is not true for
 you, and you need to conserve CPU time in using lists, the
-http://www.ingber.com/asa_contrib.txt file gives code that uses
+https://www.ingber.com/asa_contrib.txt file gives code that uses
 doubly\-linked and hashed lists.
 .PP
 If ASA_QUEUE and ASA_PRINT_MORE are TRUE then, whenever a queued cost
 function is used, this is recorded in asa_out.
+.PP
+When ASA_QUEUE is TRUE, then the value of *cost_flag is tested for FALSE
+in previous states in queue and an invalid statement is available in
+the printout.
 .NH 3
 ASA_RESOLUTION=FALSE
 .XS
@@ -2581,21 +2619,35 @@ ASA_FUZZY=FALSE
 \*(SN 			ASA_FUZZY=FALSE
 .XE
 .PP
-When ASA_FUZZY is set to TRUE, a modified fuzzy-logic algorithm originally
-developed by Hime Junior performs an adaptive tuning of selected ASA
-OPTIONS.
-ASA_FUZZY has several adaptive parameters defined in asa_usr_asa.h, and
-some fixed #define parameters in the several subroutines at the bottom
-of asa_usr.c.
-The default functions are set to tune QUENCH_COST and QUENCH_PARAMETERS
-parameters, so these are tested to be TRUE in the default asa_usr_asa.h.
-If you change any defaults, pay attention to sections labeled ASA_FUZZY at
-top and bottom sections of asa_usr.c, and in asa_usr.h.
+When ASA_FUZZY is set to TRUE, a modified fuzzy-logic algorithm
+originally developed by Hime Junior performs an adaptive tuning of
+selected ASA OPTIONS.  ASA_FUZZY has several adaptive parameters
+defined in asa_usr_asa.h, and some fixed #define parameters in the
+several subroutines at the bottom of asa_usr.c.  The default functions
+are set to tune QUENCH_COST and QUENCH_PARAMETERS parameters, so these
+are tested to be TRUE in the default asa_usr_asa.h.  If you change
+any defaults, pay attention to sections labeled ASA_FUZZY at top
+and bottom sections of asa_usr.c and asa_usr.h.
 .PP
-Caution: Often ASA_FUZZY will turn on QUENCHing > 1, violating the proof
-of ASA.  For many systems, this speeding up of the sampling process can
-be a welcome efficiency, but in some systems global minima may be missed,
-e.g., in systems with multiple scales.
+Initial QUENCH settings are saved in
+*ASA_FUZZY_Init_User_Quench_Param_Scale and
+*ASA_FUZZY_Init_User_Quench_Cost_Scale which may be used to restore
+regular annealing schedules under some conditions. In asa_usr.c they
+can be reset by the user, e.g., to 1.0, etc.
+.PP
+Often ASA_FUZZY will turn on QUENCHing > 1, violating the proof of ASA,
+as discussed above.  For many systems, this speeding up of the sampling
+process can be a welcome efficiency, but in some systems global minima
+may be missed, e.g., in systems with multiple scales.
+.NH 3
+ASA_FUZZY_PRINT=FALSE
+.XS
+\*(SN 			ASA_FUZZY_PRINT=FALSE
+.XE
+.PP
+When ASA_FUZZY is set to TRUE, if ASA_FUZZY_PRINT is TRUE, then
+notifications will be printed out from FuzzyControl () and/or AlterQuench
+() in the user module.
 .NH 3
 FITLOC=FALSE
 .XS
@@ -2686,7 +2738,7 @@ If OPTIONS\->Multi_Specify is set to 1, the selection of best-generated
 states is constrained to include only those with different values of
 the cost function.
 .PP
-The http://www.ingber.com/asa_examples.txt file contains some guidance
+The https://www.ingber.com/asa_examples.txt file contains some guidance
 of the use of MULTI_MIN (and Multi_[] OPTIONS).
 .NH 3
 ASA_PARALLEL=FALSE
@@ -2703,11 +2755,11 @@ cost functions that require the fat tail of the ASA distribution,
 leading to high generated to acceptance ratios, this is the most CPU
 intensive part of ASA that can benefit from parallelization.
 .PP
-The actual number calculated is determined by a moving average,
-determined by USER_OPTIONS\->Gener_Mov_Avr, of the previous numbers of
-USER_OPTIONS\->Gener_Block of generated states required to find a new
-best accepted state.  If and when USER_OPTIONS\->Gener_Mov_Avr is set to
-0, then USER_OPTIONS\->Gener_Block is not changed thereafter.
+USER_OPTIONS\->Gener_Block is calculated as a moving average over
+a sample of USER_OPTIONS\->Gener_Mov_Avr, of the previous numbers of
+generated states required to find a new best accepted state.  If and when
+USER_OPTIONS\->Gener_Mov_Avr is set to 0, then USER_OPTIONS\->Gener_Block
+is not changed thereafter.
 .PP
 Each block of generated states is sorted to permit the lowest cost
 functions to pass first through the acceptance test.
@@ -2723,9 +2775,25 @@ code should be inserted in asa.c between the lines:
 .fi
 .PP
 The ASA_TEMPLATE_PARALLEL example given in asa_usr.c illustrates how the
-run would proceed.  Note that since the random number generator is
+the USER_OPTIONS are set.  Note that since the random number generator is
 called differently, generating some extra states as described above,
 the results are not identical to the serial ASA_TEST calculation.
+.PP
+When ASA_PARALLEL is set to TRUE, the do loop around generated states that
+tests for invalid states is taken over, not within, blocks of parallel
+calculated cost functions for these generated states.
+.PP
+When ASA_PARALLEL is set to TRUE, code in ASA\-MAKEFILE, asa.c,
+asa_usr.c, and asa_usr_asa.h is set to run under OpenMP using the gcc
+compiler; search for instances of _OPENMP.  Change/add lines of code to
+correspond to your choice of parallel algorithm and compiler. The entire
+ASA_PARALLEL section makes assignments to indexed variables to afford
+flexibility for other such algorithms.
+.LP
+When ASA_PARALLEL is TRUE, OPTIONS\->parallel_id is available just before
+the call to each user_cost_function(), e.g., in case it is needed by
+the cost function or its own calls to other user functions.  The default
+before any calls within the SPAWN block in asa.c is parallel_id = -1.
 .NH 3
 FDLIBM_POW=FALSE
 .XS
@@ -2735,7 +2803,7 @@ FDLIBM_POW=FALSE
 When FDLIBM_POW is set to TRUE, a user\-defined function s_pow () is
 used instead of pow ().  This may be desirable on some machines when a
 speed\-up can be realized.  Some code in
-http://www.ingber.com/asa_contrib.txt should first be tested with
+https://www.ingber.com/asa_contrib.txt should first be tested with
 the standard ASA_TEST OPTIONS to see if the resulting asa_out file
 agrees with the asa_test_asa file.
 .NH 3
@@ -2747,7 +2815,7 @@ FDLIBM_LOG=FALSE
 When FDLIBM_LOG is set to TRUE, a user\-defined function s_log () is used
 instead of log ().  This may be desirable on some machines when a
 speed\-up can be realized.  Some code in
-http://www.ingber.com/asa_contrib.txt should first be tested with
+https://www.ingber.com/asa_contrib.txt should first be tested with
 the standard ASA_TEST OPTIONS to see if the resulting asa_out file
 agrees with the asa_test_asa file.
 .NH 3
@@ -2759,7 +2827,7 @@ FDLIBM_EXP=FALSE
 When FDLIBM_EXP is set to TRUE, a user\-defined function s_exp () is
 used instead of exp ().  This may be desirable on some machines when a
 speed\-up can be realized.  Some code in
-http://www.ingber.com/asa_contrib.txt should first be tested with
+https://www.ingber.com/asa_contrib.txt should first be tested with
 the standard ASA_TEST OPTIONS to see if the resulting asa_out file
 agrees with the asa_test_asa file.
 .NH 2
@@ -2767,7 +2835,7 @@ Printing DEFINE_OPTIONS
 .XS
 \*(SN 		Printing DEFINE_OPTIONS
 .XE
-.LP
+.PP
 .NH 3
 USER_OUT=\\"asa_usr_out\\"
 .XS
@@ -2778,6 +2846,15 @@ The name of the output file containing all printing from asa_usr.c.  If
 you wish to attach a process number use USER_OUT=\\"asa_usr_out_$$\\".
 (Use USER_OUT=\\"asa_usr_out_$$$$\\" if this is set in the ASA\-Makefile.) If
 USER_OUT=\\"STDOUT\\" then asa_usr.c will print to stdout.
+.NH 3
+USER_ASA_USR_OUT=FALSE
+.XS
+\*(SN 			USER_ASA_USR_OUT=FALSE
+.XE
+.PP
+When USER_ASA_USR_OUT is set to TRUE, an additional Program Option pointer,
+*Asa_Usr_Out_File, must be used to dynamically set the name(s) of the file(s)
+printed out by the user module.  (This overrides any USER_OUT settings.)
 .NH 3
 INCL_STDOUT=TRUE
 .XS
@@ -3010,6 +3087,25 @@ useful on machines that do not permit these commands.  For example,
 when ASA_SAVE is set to TRUE, asa uses a popen call in asa.c, to copy
 asa_save to asa_save.old.  This also is required to use ASA_SAVE_BACKUP
 set to TRUE.
+.NH 3
+noEXIT_INVALID_COST_FUNCTION=TRUE
+.XS
+\*(SN 			noEXIT_INVALID_COST_FUNCTION=TRUE
+.XE
+.PP
+The default to exit ASA when an invalid cost function was calculated,
+giving an exit code of 8 to report an INVALID_COST_FUNCTION, has been
+replaced by an OPTIONS to reject the cost function as invalid, adding to
+the count of *number_invalid in the asa_out file, which can exit subject
+to the OPTIONS Limit_Invalid_Generated_States.  Sometimes only a small
+percentage of generated states has parameters that cause this condition,
+and this is a reasonable way of continuing the sampling.
+Note that when Limit_Invalid_Generated_States is set to -1, this test
+is bypassed.
+.PP
+When noEXIT_INVALID_COST_FUNCTION is set to FALSE, then the previous
+conditions are enforced, and ASA exits whenever an improper cost function
+is calculated.
 .NH 2
 Program OPTIONS
 .XS
@@ -3121,6 +3217,11 @@ OPTIONAL_PTR_TYPE *Asa_Data_Ptr;
 char *Asa_Out_File;
 .in 0
 #endif
+#if USER_ASA_USR_OUT
+.in +10n
+char *Asa_Out_Usr_File;
+.in 0
+#endif
 #if USER_COST_SCHEDULE
 .in +10n
 double ( *Cost_Schedule ) ();
@@ -3195,6 +3296,7 @@ int Multi_Specify;
 #endif
 #if ASA_PARALLEL
 .in +10n
+int parallel_id;
 int Gener_Mov_Avr;
 LONG_INT Gener_Block;
 LONG_INT Gener_Block_Max;
@@ -3218,7 +3320,7 @@ USER_DEFINES;
 Note that two ways are maintained for passing the Program Options.
 Check the comments in the ASA\-NOTES file.  It may be necessary to change
 some of the options for some systems.  Read the
-http://www.ingber.com/asa_examples.txt file for some ongoing
+https://www.ingber.com/asa_examples.txt file for some ongoing
 discussions and suggestions on how to try to optimally set these
 options.  Note the distinction between trying to speed up
 annealing/quenching versus trying to slow down annealing (which
@@ -3283,8 +3385,11 @@ asa\ () at a specific number of generated points, set up a counter in
 your cost function, e.g., similar to the one in the test function in
 asa_usr.c.  For all calls >= the limit of the number of calls to the cost
 function, terminate by setting OPTIONS\->Limit_Invalid_Generated_States
-= 0 and setting *cost_flag = FALSE.  (Note that a quick exit also can
-be achieved using OPTIONS\->Immediate_Exit.)
+= 0 and setting *cost_flag = FALSE.
+Note that a quick exit also can
+be achieved using OPTIONS\->Immediate_Exit.
+Also note that when Limit_Invalid_Generated_States is set to -1, this test
+is bypassed.
 .NH 3
 OPTIONS->Accepted_To_Generated_Ratio[1.0E-6]
 .XS
@@ -3720,13 +3825,12 @@ the cost function for use in reannealing and to provide this
 information to the user.  However, if User_Tangents is set to TRUE,
 then when asa\ () requires tangents to be calculated, a value of
 *valid_state_generated_flag (called *cost_flag in ASA_TEST in asa_usr.c
-and asa_usr_cst.c) of FALSE is set and the cost function is called.  The
+and asa_usr_cst.c) of -1 is set and the cost function is called.  The
 user is expected to set up a test in the beginning of the cost function
 to sense this value, and then calculate the tangents [] array
 (containing the derivatives of the cost function, or whatever
 sensitivity measure is desired to be used for reannealing) to be
-returned to asa\ ().  An example is provided with the ASA_TEMPLATE_SAMPLE
-example.
+returned to asa\ ().  An example is provided with a ASA_TEMPLATE_SAMPLE.
 .NH 3
 OPTIONS->Curvature_0[FALSE]
 .XS
@@ -3821,6 +3925,10 @@ the value of *best_number_generated_saved in asa.c.  Note that the
 value of N_Generated typically will be less in the cost function than
 in ASA_OUT, as this value is only incremented upon returning to asa\
 () if some tests are passed.
+.PP
+If ASA_PARALLEL is TRUE, then N_Generated and *best_number_generated_saved
+will only be accurate within the scale of OPTIONS\->Gener_Block, as
+these are updated in the acceptance function.
 .NH 3
 OPTIONS->Locate_Cost
 .XS
@@ -4043,7 +4151,7 @@ use of ASA_LIB, use
 USER_OPTIONS->Asa_Data_Ptr = NULL;
 .in 0
 .PP
-The http://www.ingber.com/asa_examples.txt file contains some guidance
+The https://www.ingber.com/asa_examples.txt file contains some guidance
 of the use of OPTIONAL_DATA_PTR and Asa_Data_Ptr.
 .NH 3
 OPTIONS->Asa_Out_File
@@ -4057,6 +4165,17 @@ Printing Option USER_ASA_OUT [FALSE] to TRUE, and define the Program
 Option *Asa_Out_File in the user module.  (This overrides any ASA_OUT
 settings.)  An example of this use for multiple asa\ () runs is given in
 the user module.
+.NH 3
+OPTIONS->Asa_Usr_Out_File
+.XS
+\*(SN 			OPTIONS->Asa_Usr_Out_File
+.XE
+.PP
+If you wish to have the printing from the user module be sent to a file
+determined dynamically from the user module, set the Pre\-Compile
+Printing Option USER_ASA_USR_OUT [FALSE] to TRUE, and define the Program
+Option *Asa_Usr_Out_File in the user module.  (This overrides any USER_OUT
+settings.)
 .NH 3
 OPTIONS->Cost_Schedule
 .XS
@@ -4400,6 +4519,10 @@ the first instance of the final best value.  If Multi_Specify is set to
 0, the parameters corresponding to this final value may not be among
 the set of final Multi_Params if there are more best cost functions
 than Multi_Number.
+.PP
+If ASA_PARALLEL is TRUE, then N_Generated and *best_number_generated_saved
+will only be accurate within the scale of OPTIONS\->Gener_Block, as
+these are updated in the acceptance function.
 .NH 3
 OPTIONS->Gener_Mov_Avr
 .XS
@@ -4430,7 +4553,7 @@ OPTIONS->Gener_Block_Max
 .PP
 If ASA_PARALLEL is set to TRUE, Gener_Block_Max is an initial maximum
 block size of parallel generated states to calculate to determine a new
-best accepted state.  This can be changed adaptively during the run.
+best accepted state.
 .PP
 This can be useful if your parallel code assigns new processors \*Qon
 the fly,\*U to compensate for some cost functions being more CPU
@@ -4474,7 +4597,7 @@ User Module
 .XS
 \*(SN 	User Module
 .XE
-.PP
+.LP
 This module includes asa_usr.c, asa_usr.h, asa_usr_cst.c, and asa_usr_asa.h.  You
 may wish to combine them into one file, or you may wish to use the ASA
 module as one component of a library required for a large project.
@@ -4633,7 +4756,7 @@ USER_DEFINES *USER_OPTIONS)
 .in 0
 .fi
 .KE
-.LP
+.PP
 .NH 3
 cost_function
 .XS
@@ -4790,10 +4913,14 @@ by ASA, or that algorithm might best be used as a front\-end to ASA.
 .PP
 If OPTIONS\->User_Tangents [FALSE] has been set to TRUE, then asa\ ()
 expects the user to test the value of *valid_state_generated_flag that
-enters from asa\ ().  If *cost_flag enters with a value of FALSE, then
+enters from asa\ ().  If *cost_flag enters with a value of -1, then
 the user is expected to calculate the cost_tangents [] array before
 exiting that particular evaluation of the cost function.  An example is
 provided with the ASA_TEMPLATE_SAMPLE example.
+.PP
+When ASA_QUEUE is TRUE, then the value of *cost_flag is tested for FALSE
+in previous states in queue and an invalid statement is available in
+the printout.
 .NH 3
 int *exit_code
 .XS
@@ -4827,6 +4954,8 @@ using the set criteria.  Often this is an acceptable status code.
 TOO_MANY_INVALID_STATES = 4.  Too many repetitive generated states were
 invalid using the set criteria.  This is helpful when using *cost_flag,
 as discussed above, to include constraints.
+Note that when Limit_Invalid_Generated_States is set to -1, this test
+is bypassed.
 .LP
 IMMEDIATE_EXIT = 5.  The user has set OPTIONS\->Immediate_Exit to TRUE,
 or deleted file asa_exit_anytime when ASA_EXIT_ANYTIME is TRUE.
@@ -4842,6 +4971,8 @@ function to asa\ () which is not a valid number, e.g., not between
 Or, the user has returned a value of a parameter no longer within its
 proper range (excluding cases where the user has set the lower bound
 equal to the upper bound to remove a parameter from consideration).
+Note that to enforce this action, noEXIT_INVALID_COST_FUNCTION must
+be set to FALSE as discussed above.
 .LP
 INVALID_COST_FUNCTION_DERIV = 9.  While calculating numerical cost
 derivatives, a value of the cost function was returned which is not a
@@ -5350,7 +5481,7 @@ Bug Reports and Help With ASA
 .XS
 \*(SN 	Bug Reports and Help With ASA
 .XE
-.PP
+.LP
 Please read this ASA\-README.[] file and the ASA\-NOTES file before seeking
 help or reporting bugs.
 .PP
@@ -5389,7 +5520,7 @@ delim off
 $LIST$
 .]
 .IP [*]
-Code and reprints can be retrieved via WWW from http://www.ingber.com/ .
+Code and reprints can be retrieved via WWW from https://www.ingber.com/ .
 .if t .bp
 .pn 2
 .if n .bp

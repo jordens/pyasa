@@ -6,12 +6,12 @@ extern "C" {
 
 /***********************************************************************
 * Adaptive Simulated Annealing (ASA)
-* Lester Ingber <ingber@ingber.com>
-* Copyright (c) 1987-2012 Lester Ingber.  All Rights Reserved.
-* The ASA-LICENSE file must be included with ASA code.
+* Lester Ingber <lester@ingber.com>
+* Copyright (c) 1987-2021 Lester Ingber.  All Rights Reserved.
+* ASA-LICENSE file has the license that must be included with ASA code.
 ***********************************************************************/
 
-  /* $Id: asa_usr_asa.h,v 28.12 2012/07/02 23:58:54 ingber Exp ingber $ */
+  /* $Id: asa_usr_asa.h,v 30.43 2021/01/01 16:54:20 ingber Exp ingber $ */
 
   /* asa_usr_asa.h for Adaptive Simulated Annealing */
 
@@ -135,6 +135,10 @@ extern "C" {
 #define QUENCH_COST TRUE
 #endif
 
+#ifndef noEXIT_INVALID_COST_FUNCTION
+#define noEXIT_INVALID_COST_FUNCTION TRUE
+#endif
+
 #ifndef ASA_EXIT_ANYTIME
 #define ASA_EXIT_ANYTIME FALSE
 #endif
@@ -145,6 +149,10 @@ extern "C" {
 
 #ifndef ASA_FUZZY
 #define ASA_FUZZY FALSE
+#endif
+
+#ifndef ASA_FUZZY_PRINT
+#define ASA_FUZZY_PRINT FALSE
 #endif
 
 #if ASA_FUZZY
@@ -173,7 +181,6 @@ extern "C" {
 #define INCL_STDOUT FALSE
 #endif
 #endif
-
 #ifndef INCL_STDOUT
 #define INCL_STDOUT TRUE
 #endif
@@ -232,6 +239,7 @@ extern "C" {
 #endif
 
 #if INT_LONG
+/* works because "long" maps to "long int" */
 #define LONG_INT long int
 #else
 #define LONG_INT int
@@ -251,19 +259,23 @@ extern "C" {
      precision, i.e., as used in asa */
 #ifndef SMALL_FLOAT
 #define SMALL_FLOAT 1.0E-18
+/* #define SMALL_FLOAT MINFLOAT */
 #endif
 
   /* You can define your machine's maximum and minimum doubles here */
 #ifndef MIN_DOUBLE
 #define MIN_DOUBLE ((double) SMALL_FLOAT)
+/* #define MIN_DOUBLE MINDOUBLE */
 #endif
 
 #ifndef MAX_DOUBLE
 #define MAX_DOUBLE ((double) 1.0 / (double) SMALL_FLOAT)
+/* #define MIN_DOUBLE MINDOUBLE */
 #endif
 
 #ifndef EPS_DOUBLE
 #define EPS_DOUBLE ((double) SMALL_FLOAT)
+/* #define EPS_DOUBLE DBL_EPSILON */
 #endif
 
 #ifndef CHECK_EXPONENT
@@ -382,12 +394,16 @@ extern "C" {
 #define SELF_OPTIMIZE FALSE
 #endif
 
-#ifndef USER_OUT
-#define USER_OUT "asa_usr_out"
-#endif
-
 #ifndef USER_ASA_OUT
 #define USER_ASA_OUT FALSE
+#endif
+
+#ifndef USER_ASA_USR_OUT
+#define USER_ASA_USR_OUT FALSE
+#endif
+
+#ifndef USER_OUT
+#define USER_OUT "asa_usr_out"
 #endif
 
 #ifndef ASA_SAMPLE
@@ -475,6 +491,13 @@ extern "C" {
 #define MULTI_MIN FALSE
 #endif
 
+#if ASA_PARALLEL
+#ifdef _OPENMP
+/* may need specific path */
+#include "omp.h"
+#endif                          /* _OPENMP */
+#endif                          /* ASA_PARALLEL */
+
   /* Program Options */
 
   typedef struct {
@@ -547,6 +570,9 @@ extern "C" {
 #endif
 #if USER_ASA_OUT
     char *Asa_Out_File;
+#endif
+#if USER_ASA_USR_OUT
+    char *Asa_Usr_Out_File;
 #endif
     /* Keep OPTIONS_TMP in parameter lists in asa_usr.[ch] as they are
      * needed if using recursively, e.g., with SELF_OPTIMIZE=TRUE.
@@ -643,6 +669,7 @@ extern "C" {
     int Multi_Specify;
 #endif
 #if ASA_PARALLEL
+    int parallel_id;
     int Gener_Mov_Avr;
     LONG_INT Gener_Block;
     LONG_INT Gener_Block_Max;
@@ -686,7 +713,6 @@ extern "C" {
 
   double
     asa (double (*user_cost_function)
-
           
          (double *, double *, double *, double *, double *, ALLOC_INT *,
           int *, int *, int *, USER_DEFINES *),
@@ -698,7 +724,7 @@ extern "C" {
          USER_DEFINES * OPTIONS);
 
 #if TIME_CALC
-  void print_time (char *message, FILE * ptr_out);
+  void print_time (const char *message, FILE * ptr_out);
 #endif
 
 #if FDLIBM_POW

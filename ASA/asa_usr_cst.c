@@ -1,11 +1,11 @@
 /***********************************************************************
 * Adaptive Simulated Annealing (ASA)
-* Lester Ingber <ingber@ingber.com>
-* Copyright (c) 1987-2012 Lester Ingber.  All Rights Reserved.
-* The ASA-LICENSE file must be included with ASA code.
+* Lester Ingber <lester@ingber.com>
+* Copyright (c) 1987-2021 Lester Ingber.  All Rights Reserved.
+* ASA-LICENSE file has the license that must be included with ASA code.
 ***********************************************************************/
 
- /* $Id: asa_usr_cst.c,v 28.12 2012/07/02 23:58:51 ingber Exp ingber $ */
+ /* $Id: asa_usr_cst.c,v 30.43 2021/01/01 16:54:13 ingber Exp ingber $ */
 
  /* asa_usr_cst.c for Adaptive Simulated Annealing */
 
@@ -88,10 +88,6 @@ cost_function (x,
 
   q_n = 0.0;
   for (i = 0; i < *parameter_dimension; ++i) {
-    if (fabs (parameter_upper_bound[i] - parameter_lower_bound[i]) <
-        (double) EPS_DOUBLE)
-      continue;
-
     j = i % 4;
     switch (j) {
     case 0:

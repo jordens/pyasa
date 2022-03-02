@@ -6,12 +6,12 @@ extern "C" {
 
 /***********************************************************************
 * Adaptive Simulated Annealing (ASA)
-* Lester Ingber <ingber@ingber.com>
-* Copyright (c) 1987-2012 Lester Ingber.  All Rights Reserved.
-* The ASA-LICENSE file must be included with ASA code.
+* Lester Ingber <lester@ingber.com>
+* Copyright (c) 1987-2021 Lester Ingber.  All Rights Reserved.
+* ASA-LICENSE file has the license that must be included with ASA code.
 ***********************************************************************/
 
-  /* $Id: asa.h,v 28.12 2012/07/02 23:58:53 ingber Exp ingber $ */
+  /* $Id: asa.h,v 30.43 2021/01/01 16:54:18 ingber Exp ingber $ */
 
   /* asa.h for Adaptive Simulated Annealing */
 
@@ -198,19 +198,36 @@ extern "C" {
 #endif
                          USER_DEFINES * OPTIONS);
 
-  void generate_new_state (double (*user_random_generator) (LONG_INT *),
-                           LONG_INT * seed,
-                           double *parameter_minimum,
-                           double *parameter_maximum,
-                           double *current_parameter_temperature,
+  int generate_new_state (double (*user_random_generator) (LONG_INT *),
+                          LONG_INT * seed,
+                          double *parameter_minimum,
+                          double *parameter_maximum,
+                          double *current_parameter_temperature,
 #if USER_GENERATING_FUNCTION
-                           double *initial_user_parameter_temp,
-                           double *temperature_scale_parameters,
+                          double *initial_user_parameter_temp,
+                          double *temperature_scale_parameters,
 #endif
-                           ALLOC_INT * number_parameters,
-                           int *parameter_type,
-                           STATE * current_generated_state,
-                           STATE * last_saved_state, USER_DEFINES * OPTIONS);
+                          ALLOC_INT * number_parameters,
+                          int *parameter_type,
+                          STATE * current_generated_state,
+                          STATE * last_saved_state, USER_DEFINES * OPTIONS);
+#if ASA_PARALLEL
+  int generate_new_state_par (double (*user_random_generator) (LONG_INT *),
+                              LONG_INT * seed,
+                              double *parameter_minimum,
+                              double *parameter_maximum,
+                              double *current_parameter_temperature,
+#if USER_GENERATING_FUNCTION
+                              double *initial_user_parameter_temp,
+                              double *temperature_scale_parameters,
+#endif
+                              ALLOC_INT * number_parameters,
+                              int *parameter_type,
+                              LONG_INT i_prll,
+                              STATE * gener_block_state,
+                              STATE * last_saved_state,
+                              USER_DEFINES * OPTIONS);
+#endif                          /* ASA_PARALLEL */
 
   void reanneal (double *parameter_minimum,
                  double *parameter_maximum,
@@ -231,7 +248,6 @@ extern "C" {
 
   void
     cost_derivatives (double (*user_cost_function)
-
                        
                       (double *, double *, double *, double *, double *,
                        ALLOC_INT *, int *, int *, int *, USER_DEFINES *),
@@ -250,7 +266,6 @@ extern "C" {
 
   int
     asa_exit (double (*user_cost_function)
-
                
               (double *, double *, double *, double *, double *, ALLOC_INT *,
                int *, int *, int *, USER_DEFINES *), double *final_cost,
@@ -320,7 +335,7 @@ extern "C" {
 
 #if TIME_CALC
 #if TIME_GETRUSAGE
-  void aux_print_time (struct timeval *time, char *message,
+  void aux_print_time (struct timeval *time, const char *message,
                        FILE * ptr_asa_out);
 #if TIME_STD
   int syscall (int sys_option, int who, struct rusage *usage);
@@ -328,7 +343,7 @@ extern "C" {
   int getrusage (int who, struct rusage *usage);
 #endif                          /* TIME_STD */
 #else                           /* TIME_GETRUSAGE */
-  void aux_print_time (clock_t time, char *message, FILE * ptr_asa_out);
+  void aux_print_time (clock_t time, const char *message, FILE * ptr_asa_out);
 #if FALSE                       /* change to TRUE for SunOS 4.1.x */
   clock_t clock ();
 #endif
@@ -347,7 +362,10 @@ extern "C" {
 #else                           /* HAVE_ANSI */
 
   void accept_new_state ();
-  void generate_new_state ();
+  int generate_new_state ();
+#if ASA_PARALLEL
+  int generate_new_state_par ();
+#endif                          /* ASA_PARALLEL */
   void reanneal ();
   void cost_derivatives ();
   double generate_asa_state ();

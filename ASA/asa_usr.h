@@ -6,12 +6,12 @@ extern "C" {
 
 /***********************************************************************
 * Adaptive Simulated Annealing (ASA)
-* Lester Ingber <ingber@ingber.com>
-* Copyright (c) 1987-2012 Lester Ingber.  All Rights Reserved.
-* The ASA-LICENSE file must be included with ASA code.
+* Lester Ingber <lester@ingber.com>
+* Copyright (c) 1987-2021 Lester Ingber.  All Rights Reserved.
+* ASA-LICENSE file has the license that must be included with ASA code.
 ***********************************************************************/
 
-  /* $Id: asa_usr.h,v 28.12 2012/07/02 23:58:51 ingber Exp ingber $ */
+  /* $Id: asa_usr.h,v 30.43 2021/01/01 16:54:15 ingber Exp ingber $ */
 
   /* asa_usr.h for Adaptive Simulated Annealing */
 
@@ -319,7 +319,6 @@ extern "C" {
 #if HAVE_ANSI
   double
     calcf (double (*user_cost_function)
-
             
            (double *, double *, double *, double *, double *, ALLOC_INT *,
             int *, int *, int *, USER_DEFINES *), double *cost_parameters,
@@ -331,7 +330,6 @@ extern "C" {
 
   double
     fitloc (double (*user_cost_function)
-
              
             (double *, double *, double *, double *, double *, ALLOC_INT *,
              int *, int *, int *, USER_DEFINES *), double *cost_parameters,
@@ -343,7 +341,6 @@ extern "C" {
 
   int
     simplex (double (*user_cost_function)
-
               
              (double *, double *, double *, double *, double *, ALLOC_INT *,
               int *, int *, int *, USER_DEFINES *), double *cost_parameters,

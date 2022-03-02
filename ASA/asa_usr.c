@@ -1,15 +1,19 @@
 /***********************************************************************
 * Adaptive Simulated Annealing (ASA)
-* Lester Ingber <ingber@ingber.com>
-* Copyright (c) 1987-2012 Lester Ingber.  All Rights Reserved.
-* The ASA-LICENSE file must be included with ASA code.
+* Lester Ingber <lester@ingber.com>
+* Copyright (c) 1987-2021 Lester Ingber.  All Rights Reserved.
+* ASA-LICENSE file has the license that must be included with ASA code.
 ***********************************************************************/
 
-#define USER_ID "/* $Id: asa_usr.c,v 28.12 2012/07/02 23:58:50 ingber Exp ingber $ */"
+#define USER_ID "/* $Id: asa_usr.c,v 30.43 2021/01/01 16:54:11 ingber Exp ingber $ */"
 
 #include "asa_usr.h"
 #if MY_TEMPLATE                 /* MY_TEMPLATE_includes */
   /* add your own include files as required */
+#endif
+
+#ifndef ASA_BYPASS
+#define ASA_BYPASS FALSE
 #endif
 
 #if ASA_LIB
@@ -24,6 +28,8 @@ static double random_array[SHUFFLE];
 static double **FuzzyParameters;
 static double *FuzzyValues, *FuzzyMinima, *auxV;
 static double ValMinLoc;
+double *ASA_FUZZY_Init_User_Quench_Param_Scale;
+double *ASA_FUZZY_Init_User_Quench_Cost_Scale;
 #endif
 
 #if SELF_OPTIMIZE
@@ -267,22 +273,23 @@ main (argc, argv)
   } else {
     ptr_out = fopen (USER_OUT, "a");
   }
-#else
+#else /* ASA_SAVE */
   if (!strcmp (USER_OUT, "STDOUT")) {
 #if INCL_STDOUT
     ptr_out = stdout;
 #endif /* INCL_STDOUT */
   } else {
+#if USER_ASA_USR_OUT
+    ;
+#else
     ptr_out = fopen (USER_OUT, "w");
 #if ASA_TEMPLATE
     /* if multiple calls are to be saved */
     ptr_out = fopen (USER_OUT, "a");
 #endif /* ASA_TEMPLATE */
+#endif /* USER_ASA_USR_OUT */
   }
-#endif
-
-#endif /* ASA_TEMPLATE_ASA_OUT_PID */
-
+#endif /* ASA_SAVE */
 #if INCL_STDOUT
   /* use this instead if you want output to stdout */
 #endif /* INCL_STDOUT */
@@ -291,6 +298,27 @@ main (argc, argv)
   ptr_out = stdout;
 #endif /* INCL_STDOUT */
 #endif
+
+#if USER_ASA_USR_OUT
+  if ((USER_OPTIONS->Asa_Usr_Out_File =
+       (char *) calloc (80, sizeof (char))) == NULL) {
+    strcpy (user_exit_msg,
+            "main()/asa_main(): USER_OPTIONS->Asa_Usr_Out_File");
+    Exit_USER (user_exit_msg);
+    return (-2);
+  }
+#if ASA_TEMPLATE
+  sprintf (USER_OPTIONS->Asa_Usr_Out_File, "%s", "asa_usr_out_my");
+
+  /* OR create memory for file asa_usr_out_my */
+  /* which must be "free(asa_usr_out_my);" after use */
+  strcpy (USER_OPTIONS->Asa_Usr_Out_File, asa_usr_out_my);
+
+  ptr_out = fopen (USER_OPTIONS->Asa_Usr_Out_File, "w");
+#endif /* ASA_TEMPLATE */
+#endif /* USER_ASA_USR_OUT */
+
+#endif /* ASA_TEMPLATE_ASA_OUT_PID */
   fprintf (ptr_out, "%s\n\n", USER_ID);
   if (number_asa_usr_open > 1) {
     fprintf (ptr_out, "\n\n\t\t number_asa_usr_open = %d\n",
@@ -525,7 +553,16 @@ main (argc, argv)
     Exit_USER (user_exit_msg);
     return (-2);
   }
-#endif
+#if ASA_TEMPLATE
+  sprintf (USER_OPTIONS->Asa_Out_File, "%s", "asa_out_my");
+
+  /* OR create memory for file asa_out_my */
+  /* which must be "free(asa_out_my);" after use */
+  strcpy (USER_OPTIONS->Asa_Out_File, asa_out_my);
+
+  ptr_out = fopen (USER_OPTIONS->Asa_Out_File, "w");
+#endif /* ASA_TEMPLATE */
+#endif /* USER_ASA_OUT */
 
   /* the number of parameters for the cost function */
 #if OPTIONS_FILE_DATA
@@ -565,6 +602,12 @@ main (argc, argv)
   USER_OPTIONS->Gener_Block = 100;
   USER_OPTIONS->Gener_Block_Max = 512;
   USER_OPTIONS->Gener_Mov_Avr = 3;
+#ifdef _OPENMP
+  USER_OPTIONS->Gener_Block_Max =
+    MIN (USER_OPTIONS->Gener_Block_Max, (LONG_INT) omp_get_max_threads ());
+  USER_OPTIONS->Gener_Block =
+    MIN (USER_OPTIONS->Gener_Block_Max, USER_OPTIONS->Gener_Block);
+#endif /* _OPENMP */
 #endif
 
   /* allocate parameter minimum space */
@@ -753,6 +796,10 @@ main (argc, argv)
 #if ASA_FUZZY
       InitFuzzyASA (USER_OPTIONS, *parameter_dimension);
 #endif /* ASA_FUZZY */
+
+#if ASA_BYPASS
+      cost_value = 10000;
+#else
       cost_value =
         asa (USER_COST_FUNCTION,
              randflt,
@@ -772,6 +819,8 @@ main (argc, argv)
         fflush (ptr_out);
         return (-1);
       }
+#endif /* ASA_BYPASS */
+
 #if ASA_FUZZY
       if (USER_OPTIONS->Locate_Cost == 12) {
         USER_OPTIONS->Locate_Cost = 0;
@@ -846,21 +895,116 @@ main (argc, argv)
 #endif /* MULTI_MIN */
 
 #if FITLOC
+      ALLOC_INT *FITparameter_dimension, FITn, FITm, index_v;
+      double *FITparameter_lower_bound, *FITparameter_upper_bound,
+        *FITcost_parameters, *FITSAVcost_parameters;
+      int *FITparameter_int_real;
+#if ASA_RESOLUTION
+      double *FITCoarse_Resolution;
+#endif
+
+      if ((FITparameter_dimension =
+           (ALLOC_INT *) calloc (1, sizeof (ALLOC_INT))) == NULL) {
+        return (-2);
+      }
+      FITm = -1;
+      for (FITn = 0; FITn < *parameter_dimension; ++FITn) {
+        if (fabs (parameter_upper_bound[FITn] - parameter_lower_bound[FITn]) <
+            (double) EPS_DOUBLE) {
+          continue;
+        }
+        ++FITm;
+      }
+      *FITparameter_dimension = FITm + 1;
+
+      if ((FITSAVcost_parameters =
+           (double *) calloc (*parameter_dimension,
+                              sizeof (double))) == NULL) {
+        return (-2);
+      }
+      if ((FITparameter_lower_bound =
+           (double *) calloc (*FITparameter_dimension,
+                              sizeof (double))) == NULL) {
+        return (-2);
+      }
+      if ((FITparameter_upper_bound =
+           (double *) calloc (*FITparameter_dimension,
+                              sizeof (double))) == NULL) {
+        return (-2);
+      }
+      if ((FITcost_parameters =
+           (double *) calloc (*FITparameter_dimension,
+                              sizeof (double))) == NULL) {
+        return (-2);
+      }
+
+      if ((FITparameter_int_real =
+           (int *) calloc (*FITparameter_dimension, sizeof (int))) == NULL) {
+        return (-2);
+      }
+
+#if ASA_RESOLUTION
+      if ((FITCoarse_Resolution =
+           (double *) calloc (*FITparameter_dimension,
+                              sizeof (double))) == NULL) {
+        return (-2);
+      }
+#endif
+
+      for (index_v = 0; index_v < *parameter_dimension; ++index_v) {
+        FITSAVcost_parameters[index_v] = cost_parameters[index_v];
+      }
+      FITm = -1;
+      for (FITn = 0; FITn < *parameter_dimension; ++FITn) {
+        if (fabs (parameter_upper_bound[FITn] - parameter_lower_bound[FITn]) <
+            (double) EPS_DOUBLE) {
+          continue;
+        }
+        ++FITm;
+        FITcost_parameters[FITm] = cost_parameters[FITn];
+        FITparameter_int_real[FITm] = parameter_int_real[FITn];
+        FITparameter_lower_bound[FITm] = parameter_lower_bound[FITn];
+        FITparameter_upper_bound[FITm] = parameter_upper_bound[FITn];
+#if ASA_RESOLUTION
+        FITCoarse_Resolution[FITm] = USER_OPTIONS->Coarse_Resolution[FITn];
+#endif
+      }
+
       /* Fit_Local, Iter_Max and Penalty may be set adaptively */
       USER_OPTIONS->Penalty = 1000;
       USER_OPTIONS->Fit_Local = 1;
       USER_OPTIONS->Iter_Max = 500;
       if (USER_OPTIONS->Fit_Local >= 1) {
         cost_value = fitloc (USER_COST_FUNCTION,
-                             cost_parameters,
-                             parameter_lower_bound,
-                             parameter_upper_bound,
+                             FITcost_parameters,
+                             FITparameter_lower_bound,
+                             FITparameter_upper_bound,
                              cost_tangents,
                              cost_curvature,
-                             parameter_dimension,
-                             parameter_int_real,
+                             FITparameter_dimension,
+                             FITparameter_int_real,
                              cost_flag, exit_code, USER_OPTIONS, ptr_out);
       }
+
+      FITm = -1;
+      for (FITn = 0; FITn < *parameter_dimension; ++FITn) {
+        if (fabs (parameter_upper_bound[FITn] - parameter_lower_bound[FITn]) <
+            (double) EPS_DOUBLE) {
+          continue;
+        }
+        ++FITm;
+        cost_parameters[FITn] = FITcost_parameters[FITm];
+      }
+
+      free (FITparameter_lower_bound);
+      free (FITparameter_upper_bound);
+      free (FITcost_parameters);
+      free (FITSAVcost_parameters);
+      free (FITparameter_int_real);
+#if ASA_RESOLUTION
+      free (FITCoarse_Resolution);
+#endif
+      free (FITparameter_dimension);
 #endif /* FITLOC */
 
 #if ASA_TEMPLATE                /* extra USER_COST_FUNCTION run */
@@ -935,7 +1079,18 @@ main (argc, argv)
   free (USER_OPTIONS->Asa_Data_Ptr);
 #endif
 #if USER_ASA_OUT
+#if TEMPLATE
+  /* if necessary */
+  free (asa_out_my);
+#endif
   free (USER_OPTIONS->Asa_Out_File);
+#endif
+#if USER_ASA_USR_OUT
+#if ASA_TEMPLATE
+  /* if necessary */
+  free (asa_usr_out_my);
+#endif
+  free (USER_OPTIONS->Asa_Usr_Out_File);
 #endif
 #if ASA_SAMPLE
   free (USER_OPTIONS->Bias_Generated);
@@ -960,9 +1115,15 @@ main (argc, argv)
 #endif
 #if QUENCH_PARAMETERS
   free (USER_OPTIONS->User_Quench_Param_Scale);
+#if ASA_FUZZY
+  free (ASA_FUZZY_Init_User_Quench_Param_Scale);
+#endif /* ASA_FUZZY */
 #endif
 #if QUENCH_COST
   free (USER_OPTIONS->User_Quench_Cost_Scale);
+#if ASA_FUZZY
+  free (ASA_FUZZY_Init_User_Quench_Cost_Scale);
+#endif /* ASA_FUZZY */
 #endif
 #if RATIO_TEMPERATURE_SCALES
   free (USER_OPTIONS->User_Temperature_Ratio);
@@ -1159,6 +1320,15 @@ initialize_parameters (cost_parameters,
     Exit_USER (user_exit_msg);
     return (-2);
   }
+#if ASA_FUZZY
+  if ((ASA_FUZZY_Init_User_Quench_Param_Scale =
+       (double *) calloc (*parameter_dimension, sizeof (double))) == NULL) {
+    strcpy (user_exit_msg,
+            "initialize_parameters(): ASA_FUZZY_Init_User_Quench_Param_Scale");
+    Exit_USER (user_exit_msg);
+    return (-2);
+  }
+#endif /* ASA_FUZZY */
 #if ASA_TEMPLATE
   for (index = 0; index < *parameter_dimension; ++index)
     USER_OPTIONS->User_Quench_Param_Scale[index] = 1.0;
@@ -1180,6 +1350,15 @@ initialize_parameters (cost_parameters,
     Exit_USER (user_exit_msg);
     return (-2);
   }
+#if ASA_FUZZY
+  if ((ASA_FUZZY_Init_User_Quench_Cost_Scale =
+       (double *) calloc (1, sizeof (double))) == NULL) {
+    strcpy (user_exit_msg,
+            "initialize_parameters(): ASA_FUZZY_Init_User_Quench_Cost_Scale");
+    Exit_USER (user_exit_msg);
+    return (-2);
+  }
+#endif /* ASA_FUZZY */
 #if ASA_TEMPLATE
   USER_OPTIONS->User_Quench_Cost_Scale[0] = 1.0;
 #endif
@@ -1219,6 +1398,18 @@ initialize_parameters (cost_parameters,
 #endif /* QUENCH_PARAMETERS */
 #endif /* QUENCH_COST */
 #endif /* OPTIONS_FILE_DATA */
+#if ASA_FUZZY
+  /* can also simply set
+   * ASA_FUZZY_Init_User_Quench_Cost_Scale[0] = 1.0;
+   * ASA_FUZZY_Init_User_Quench_Param_Scale[index] = 1.0;
+   */
+
+  ASA_FUZZY_Init_User_Quench_Cost_Scale[0] =
+    USER_OPTIONS->User_Quench_Cost_Scale[0];
+  for (index = 0; index < *parameter_dimension; ++index)
+    ASA_FUZZY_Init_User_Quench_Param_Scale[index] =
+      USER_OPTIONS->User_Quench_Param_Scale[index];
+#endif /* ASA_FUZZY */
 
 #if RATIO_TEMPERATURE_SCALES
   if ((USER_OPTIONS->User_Temperature_Ratio =
@@ -1458,10 +1649,6 @@ cost_function (x,
 #if ASA_TEST_POINT
   k_flag = 0;
   for (i = 0; i < *parameter_dimension; ++i) {
-    if (fabs (parameter_upper_bound[i] - parameter_lower_bound[i]) <
-        (double) EPS_DOUBLE)
-      continue;
-
     if (x[i] > 0.0) {
       k_i = (int) (x[i] / s_i + 0.5);
     } else if (x[i] < 0.0) {
@@ -1476,10 +1663,6 @@ cost_function (x,
 
   q_n = 0.0;
   for (i = 0; i < *parameter_dimension; ++i) {
-    if (fabs (parameter_upper_bound[i] - parameter_lower_bound[i]) <
-        (double) EPS_DOUBLE)
-      continue;
-
     j = i % 4;
     switch (j) {
     case 0:
@@ -1581,19 +1764,11 @@ cost_function (x,
 
   if (*cost_flag == FALSE) {
     for (n = 0; n < *parameter_dimension; ++n)
-      if (fabs (parameter_upper_bound[n] - parameter_lower_bound[n]) <
-          (double) EPS_DOUBLE)
-        continue;
-
-    cost_tangents[n] = 2.0 * x[n];
+      cost_tangents[n] = 2.0 * x[n];
   }
 
   cost = 0.0;
   for (n = 0; n < *parameter_dimension; ++n) {
-    if (fabs (parameter_upper_bound[n] - parameter_lower_bound[n]) <
-        (double) EPS_DOUBLE)
-      continue;
-
     cost += (x[n] * x[n]);
   }
 
@@ -2660,6 +2835,13 @@ main (argc, argv)
     free (recur_cost_curvature);
     return (recur_initialize_params_value);
   }
+#if USER_ASA_USR_OUT
+  if ((RECUR_USER_OPTIONS->Asa_Usr_Out_File =
+       (char *) calloc (80, sizeof (char))) == NULL) {
+    strcpy (user_exit_msg,
+            "main()/asa_main(): RECUR_USER_OPTIONS->Asa_Usr_Out_File");
+  }
+#endif
 #if USER_ASA_OUT
   if ((RECUR_USER_OPTIONS->Asa_Out_File =
        (char *) calloc (80, sizeof (char))) == NULL) {
@@ -2756,22 +2938,135 @@ main (argc, argv)
 #endif /* MULTI_MIN */
 
 #if FITLOC
+  int FITrecur_m, FITrecur_n, index_v;
+  ALLOC_INT *FITrecur_parameter_dimension;
+  double *FITrecur_parameter_lower_bound, *FITrecur_parameter_upper_bound,
+    *FITrecur_cost_parameters, *FITrecur_SAVcost_parameters;
+  int *FITrecur_parameter_int_real;
+#if ASA_RESOLUTION
+  double *FITrecur_Coarse_Resolution;
+#endif
+
+  if ((FITrecur_parameter_dimension =
+       (ALLOC_INT *) calloc (1, sizeof (ALLOC_INT))) == NULL) {
+    return (-2);
+  }
+  FITrecur_m = -1;
+  for (FITrecur_n = 0; FITrecur_n < *recur_parameter_dimension; ++FITrecur_n) {
+    if (fabs
+        (recur_parameter_upper_bound[FITrecur_n] -
+         recur_parameter_lower_bound[FITrecur_n]) < (double) EPS_DOUBLE) {
+      continue;
+    }
+    ++FITrecur_m;
+  }
+  *FITrecur_parameter_dimension = FITrecur_m + 1;
+
+  if ((FITrecur_SAVcost_parameters =
+       (double *) calloc (*recur_parameter_dimension,
+                          sizeof (double))) == NULL) {
+    return (-2);
+  }
+  if ((FITrecur_parameter_lower_bound =
+       (double *) calloc (*FITrecur_parameter_dimension,
+                          sizeof (double))) == NULL) {
+    return (-2);
+  }
+  if ((FITrecur_parameter_upper_bound =
+       (double *) calloc (*FITrecur_parameter_dimension,
+                          sizeof (double))) == NULL) {
+    return (-2);
+  }
+  if ((FITrecur_cost_parameters =
+       (double *) calloc (*FITrecur_parameter_dimension,
+                          sizeof (double))) == NULL) {
+    return (-2);
+  }
+
+  if ((FITrecur_parameter_int_real =
+       (int *) calloc (*FITrecur_parameter_dimension,
+                       sizeof (int))) == NULL) {
+    return (-2);
+  }
+#if ASA_RESOLUTION
+  if ((FITrecur_Coarse_Resolution =
+       (double *) calloc (*FITrecur_parameter_dimension,
+                          sizeof (double))) == NULL) {
+    return (-2);
+  }
+#endif
+
+  for (index_v = 0; index_v < *recur_parameter_dimension; ++index_v) {
+    FITrecur_SAVcost_parameters[index_v] = recur_cost_parameters[index_v];
+  }
+
+  FITrecur_m = -1;
+  for (FITrecur_n = 0; FITrecur_n < *recur_parameter_dimension; ++FITrecur_n) {
+    if (fabs
+        (recur_parameter_upper_bound[FITrecur_n] -
+         recur_parameter_lower_bound[FITrecur_n]) < (double) EPS_DOUBLE) {
+      continue;
+    }
+    ++FITrecur_m;
+    FITrecur_cost_parameters[FITrecur_m] = recur_cost_parameters[FITrecur_n];
+    FITrecur_parameter_int_real[FITrecur_m] =
+      recur_parameter_int_real[FITrecur_n];
+    FITrecur_parameter_lower_bound[FITrecur_m] =
+      recur_parameter_lower_bound[FITrecur_n];
+    FITrecur_parameter_upper_bound[FITrecur_m] =
+      recur_parameter_upper_bound[FITrecur_n];
+#if ASA_RESOLUTION
+    FITrecur_Coarse_Resolution[FITrecur_m] =
+      RECUR_USER_OPTIONS->Coarse_Resolution[FITrecur_n];
+#endif
+  }
+
   /* Fit_Local and Penalty may be set adaptively */
   RECUR_USER_OPTIONS->Penalty = 1000;
   RECUR_USER_OPTIONS->Fit_Local = 1;
   RECUR_USER_OPTIONS->Iter_Max = 500;
   if (RECUR_USER_OPTIONS->Fit_Local >= 1) {
     recur_cost_value = fitloc (RECUR_USER_COST_FUNCTION,
-                               recur_cost_parameters,
-                               recur_parameter_lower_bound,
-                               recur_parameter_upper_bound,
+                               FITrecur_cost_parameters,
+                               FITrecur_parameter_lower_bound,
+                               FITrecur_parameter_upper_bound,
                                recur_cost_tangents,
                                recur_cost_curvature,
-                               recur_parameter_dimension,
-                               recur_parameter_int_real,
+                               FITrecur_parameter_dimension,
+                               FITrecur_parameter_int_real,
                                recur_cost_flag,
                                recur_exit_code, RECUR_USER_OPTIONS, ptr_out);
   }
+
+  for (index_v = 0; index_v < *recur_parameter_dimension; ++index_v) {
+    if (fabs
+        (recur_parameter_upper_bound[index_v] -
+         recur_parameter_lower_bound[index_v])
+        < (double) EPS_DOUBLE) {
+      recur_cost_parameters[index_v] = FITrecur_SAVcost_parameters[index_v];
+    }
+  }
+
+  FITrecur_m = -1;
+  for (FITrecur_n = 0; FITrecur_n < *recur_parameter_dimension; ++FITrecur_n) {
+    if (fabs
+        (recur_parameter_upper_bound[FITrecur_n] -
+         recur_parameter_lower_bound[FITrecur_n]) < (double) EPS_DOUBLE) {
+      continue;
+    }
+    ++FITrecur_m;
+    recur_cost_parameters[FITrecur_n] = FITrecur_cost_parameters[FITrecur_m];
+  }
+
+  free (FITrecur_parameter_lower_bound);
+  free (FITrecur_parameter_upper_bound);
+  free (FITrecur_cost_parameters);
+  free (FITrecur_SAVcost_parameters);
+  free (FITrecur_parameter_int_real);
+#if ASA_RESOLUTION
+  free (FITrecur_Coarse_Resolution);
+#endif
+  free (FITrecur_parameter_dimension);
 #endif /* FITLOC */
 
   fprintf (ptr_out, "\n\n recur_cost_value = %12.7g\n", recur_cost_value);
@@ -2817,7 +3112,18 @@ main (argc, argv)
   free (RECUR_USER_OPTIONS->Asa_Data_Ptr);
 #endif
 #if USER_ASA_OUT
+#if TEMPLATE
+  /* if necessary */
+  free (recur_asa_out_my);
+#endif
   free (RECUR_USER_OPTIONS->Asa_Out_File);
+#endif
+#if USER_ASA_USR_OUT
+#if ASA_TEMPLATE
+  /* if necessary */
+  free (recur_asa_usr_out_my);
+#endif
+  free (RECUR_USER_OPTIONS->Asa_Usr_Out_File);
 #endif
 #if ASA_QUEUE
 #if ASA_RESOLUTION
@@ -3655,6 +3961,13 @@ recur_cost_function (x,
 
   funevals = 0;
 
+#if USER_ASA_USR_OUT
+  if ((USER_OPTIONS->Asa_Usr_Out_File =
+       (char *) calloc (80, sizeof (char))) == NULL) {
+    strcpy (user_exit_msg,
+            "recur_cost_function(): USER_OPTIONS->Asa_Usr_Out_File");
+  }
+#endif
 #if USER_ASA_OUT
   if ((USER_OPTIONS->Asa_Out_File =
        (char *) calloc (80, sizeof (char))) == NULL) {
@@ -3821,7 +4134,18 @@ recur_cost_function (x,
   }
 #endif
 #if USER_ASA_OUT
+#if TEMPLATE
+  /* if necessary */
+  free (asa_out_my);
+#endif
   free (USER_OPTIONS->Asa_Out_File);
+#endif
+#if USER_ASA_USR_OUT
+#if ASA_TEMPLATE
+  /* if necessary */
+  free (asa_usr_out_my);
+#endif
+  free (USER_OPTIONS->Asa_Usr_Out_File);
 #endif
 #if ASA_QUEUE
 #if ASA_RESOLUTION
@@ -4136,7 +4460,6 @@ recur_user_reanneal_params (current_temp, tangent, max_tangent, OPTIONS_TMP)
 #if HAVE_ANSI
 double
 calcf (double (*user_cost_function)
-
         
        (double *, double *, double *, double *, double *, ALLOC_INT *, int *,
         int *, int *, USER_DEFINES *), double *xloc,
@@ -4171,11 +4494,11 @@ calcf (user_cost_function,
   ALLOC_INT index_v;
 #if FITLOC_ROUND
   double x, min_parameter_v, max_parameter_v, parameter_range_v;
-#endif
-  double floc;
 #if ASA_RESOLUTION
   double xres, xint, xplus, xminus, dx, dxminus, dxplus;
 #endif
+#endif
+  double floc;
 
 #if FITLOC_ROUND
   /* The following section for adjustments of parameters is taken from
@@ -4194,7 +4517,7 @@ calcf (user_cost_function,
 
     /* Handle discrete parameters. */
 #if ASA_RESOLUTION
-    xres = OPTIONS->Coarse_Resolution[index_v];
+    xres = FITCoarse_Resolution[index_v];
     if (xres > EPS_DOUBLE) {
       min_parameter_v -= (xres / 2.0);
       max_parameter_v += (xres / 2.0);
@@ -4304,7 +4627,6 @@ calcf (user_cost_function,
 #if HAVE_ANSI
 double
 fitloc (double (*user_cost_function)
-
          
         (double *, double *, double *, double *, double *, ALLOC_INT *, int *,
          int *, int *, USER_DEFINES *), double *xloc,
@@ -4341,13 +4663,13 @@ fitloc (user_cost_function,
   ALLOC_INT index_v;
 #if FITLOC_ROUND
   double min_parameter_v, max_parameter_v, parameter_range_v;
+#if ASA_RESOLUTION
+  double xres, xint, xminus, xplus, dx, dxminus, dxplus;
+#endif
 #endif
   double *xsave;
   double tol1, tol2, alpha, beta1, beta2, gamma, delta, floc, fsave, ffinal;
   int no_progress, tot_iters, locflg, bndflg;
-#if ASA_RESOLUTION
-  double xres, xint, xminus, xplus, dx, dxminus, dxplus;
-#endif
 
 #if FITLOC_PRINT
   if (OPTIONS->Fit_Local >= 1) {
@@ -4370,6 +4692,9 @@ fitloc (user_cost_function,
   beta2 = 0.75;
   gamma = 1.25;
   delta = 2.50;
+  tot_iters = 0;
+  if (tot_iters != 0)
+    tot_iters = 0;
 
   for (index_v = 0; index_v < *parameter_dimension; ++index_v) {
     xsave[index_v] = xloc[index_v];
@@ -4425,7 +4750,7 @@ fitloc (user_cost_function,
 
     /* Handle discrete parameters. */
 #if ASA_RESOLUTION
-    xres = OPTIONS->Coarse_Resolution[index_v];
+    xres = FITCoarse_Resolution[index_v];
     if (xres > EPS_DOUBLE) {
       min_parameter_v -= (xres / 2.0);
       max_parameter_v += (xres / 2.0);
@@ -4510,6 +4835,7 @@ fitloc (user_cost_function,
       else
         fprintf (ptr_out, "OUT OF BOUNDS xloc[%ld] = %g\n",
                  index_v, xloc[index_v]);
+      fflush (ptr_out);
 #else
       ;
 #endif /* FITLOC_PRINT */
@@ -4528,12 +4854,14 @@ fitloc (user_cost_function,
                              parameter_int_real,
                              cost_flag, exit_code, OPTIONS);
 
-  if (fabs (floc - fsave) < (double) EPS_DOUBLE) {
+  if ((fabs (floc - fsave) < (double) EPS_DOUBLE) || (floc < MAX_DOUBLE)
+      || (floc > MIN_DOUBLE) || ((floc) != (floc))) {
     locflg = 1;
     ffinal = fsave;
 #if FITLOC_PRINT
     fprintf (ptr_out, "\nsame global cost = %g\tlocal cost = %g\n\n",
              fsave, floc);
+    fflush (ptr_out);
 #endif /* FITLOC_PRINT */
   } else {
     if (floc < fsave) {
@@ -4551,6 +4879,7 @@ fitloc (user_cost_function,
 #if FITLOC_PRINT
     fprintf (ptr_out, "\nDIFF global cost = %g\tlocal cost = %g\n\n",
              fsave, floc);
+    fflush (ptr_out);
 #endif /* FITLOC_PRINT */
   }
 
@@ -4559,6 +4888,7 @@ fitloc (user_cost_function,
 #if FITLOC_PRINT
       fprintf (ptr_out, "same global param[%ld] = %g\tlocal param = %g\n",
                index_v, xsave[index_v], xloc[index_v]);
+      fflush (ptr_out);
 #else
       ;
 #endif /* FITLOC_PRINT */
@@ -4566,6 +4896,7 @@ fitloc (user_cost_function,
 #if FITLOC_PRINT
       fprintf (ptr_out, "DIFF global param[%ld] = %g\tlocal param = %g\n",
                index_v, xsave[index_v], xloc[index_v]);
+      fflush (ptr_out);
 #else
       ;
 #endif /* FITLOC_PRINT */
@@ -4607,13 +4938,12 @@ fitloc (user_cost_function,
    %D 1980
    %P 1150-1153
 
-   adapted for use in ASA by Lester Ingber <ingber@ingber.com>
+   adapted for use in ASA by Lester Ingber <lester@ingber.com>
  */
 
 #if HAVE_ANSI
 int
 simplex (double (*user_cost_function)
-
           
          (double *, double *, double *, double *, double *, ALLOC_INT *,
           int *, int *, int *, USER_DEFINES *), double *x,
@@ -4763,6 +5093,7 @@ simplex (user_cost_function,
       fprintf (ptr_out, "  LOWEST");
     fprintf (ptr_out, "\n");
   }
+  fflush (ptr_out);
 #endif /* FITLOC_PRINT */
 
 /* MAJOR LOOP */
@@ -4808,6 +5139,7 @@ simplex (user_cost_function,
 #if FITLOC_PRINT
     if ((s == h) || (s == l) || (h == l))
       fprintf (ptr_out, "\nPANIC: s,l,h not unique %d %d %d\n", s, h, l);
+    fflush (ptr_out);
 #endif
 
     /* compute the centroid */
@@ -5404,11 +5736,11 @@ DeltaFactor (USER_DEFINES * USER_OPTIONS, double MeanSub)
       (MeanSub - USER_OPTIONS->Threshold1) / (-USER_OPTIONS->Threshold1);
   }
 
-/*
- RULE #2 - IF MeanSub is ValMinLoc ( FUZZY NUMBER )
-                       THEN decreasing rate is POSITIVE
-( We are in a region near the present basic local minimum )
-*/
+  /*
+     RULE #2 - IF MeanSub is ValMinLoc ( FUZZY NUMBER )
+     THEN decreasing rate is POSITIVE
+     ( We are in a region near the present basic local minimum )
+   */
 
   if (MeanSub >= ValMinLoc && MeanSub <= ValMinLoc + INTER1) {
     MembershipMeanMedium = (ValMinLoc + INTER1 - MeanSub) / INTER1;
@@ -5435,11 +5767,69 @@ AlterQuench (USER_DEFINES * USER_OPTIONS,
   Delta = DeltaFactor (USER_OPTIONS, Mean);
   if (USER_OPTIONS->User_Quench_Cost_Scale[0] < 100) {
     USER_OPTIONS->User_Quench_Cost_Scale[0] *= (1 + Mult1 * Delta);
+
+#if ASA_FUZZY_PRINT
+    /* give approximate asa_out location when ASA_FUZZY operates */
+#if ASA_PARALLEL
+#if INT_LONG
+    fprintf (ptr_out,
+             "ASA_FUZZY Cost Delta: parallel_id: %d N_Generated: %ld N_Accepted: %ld\n",
+             USER_OPTIONS->parallel_id, USER_OPTIONS->N_Generated,
+             USER_OPTIONS->N_Accepted);
+#else
+    fprintf (ptr_out,
+             "ASA_FUZZY Cost Delta: parallel_id: %d N_Generated: %d N_Accepted: %d\n",
+             USER_OPTIONS->parallel_id, USER_OPTIONS->N_Generated,
+             USER_OPTIONS->N_Accepted);
+#endif /* INT_LONG */
+#else /* ASA_PARALLEL */
+#if INT_LONG
+    fprintf (ptr_out,
+             "ASA_FUZZY Cost Delta: N_Generated: %ld N_Accepted: %ld\n",
+             USER_OPTIONS->N_Generated, USER_OPTIONS->N_Accepted);
+#else
+    fprintf (ptr_out,
+             "ASA_FUZZY Cost Delta: N_Generated: %d N_Accepted: %d\n",
+             USER_OPTIONS->N_Generated, USER_OPTIONS->N_Accepted);
+#endif /* INT_LONG */
+#endif /* ASA_PARALLEL */
+    fflush (ptr_out);
+#endif /* ASA_FUZZY_PRINT */
+
   }
 
   for (i = 0; i < NoParam; i++) {
     if (USER_OPTIONS->User_Quench_Param_Scale[i] < 100) {
       USER_OPTIONS->User_Quench_Param_Scale[i] *= (1 + Mult2 * Delta);
+
+#if ASA_FUZZY_PRINT
+      /* give approximate asa_out location when ASA_FUZZY operates */
+#if ASA_PARALLEL
+#if INT_LONG
+      fprintf (ptr_out,
+               "ASA_FUZZY Param Delta: parallel_id: %d N_Generated: %ld N_Accepted: %ld\n",
+               USER_OPTIONS->parallel_id, USER_OPTIONS->N_Generated,
+               USER_OPTIONS->N_Accepted);
+#else
+      fprintf (ptr_out,
+               "ASA_FUZZY Param Delta: parallel_id: %d N_Generated: %d N_Accepted: %d\n",
+               USER_OPTIONS->parallel_id, USER_OPTIONS->N_Generated,
+               USER_OPTIONS->N_Accepted);
+#endif /* INT_LONG */
+#else /* ASA_PARALLEL */
+#if INT_LONG
+      fprintf (ptr_out,
+               "ASA_FUZZY Param Delta: N_Generated: %ld N_Accepted: %ld\n",
+               USER_OPTIONS->N_Generated, USER_OPTIONS->N_Accepted);
+#else
+      fprintf (ptr_out,
+               "ASA_FUZZY Param Delta: N_Generated: %d N_Accepted: %d\n",
+               USER_OPTIONS->N_Generated, USER_OPTIONS->N_Accepted);
+#endif /* INT_LONG */
+#endif /* ASA_PARALLEL */
+      fflush (ptr_out);
+#endif /* ASA_FUZZY_PRINT */
+
     }
   }
 
@@ -5455,6 +5845,35 @@ AlterQuench (USER_DEFINES * USER_OPTIONS,
                           &Meanaux, &Deviationaux);
         USER_OPTIONS->User_Quench_Param_Scale[i] /= (1 + Mult4 * Delta *
                                                      exp (-Deviationaux));
+
+#if ASA_FUZZY_PRINT
+        /* give approximate asa_out location when ASA_FUZZY operates */
+#if ASA_PARALLEL
+#if INT_LONG
+        fprintf (ptr_out,
+                 "ASA_FUZZY Deviation: parallel_id: %d N_Generated: %ld N_Accepted: %ld\n",
+                 USER_OPTIONS->parallel_id, USER_OPTIONS->N_Generated,
+                 USER_OPTIONS->N_Accepted);
+#else
+        fprintf (ptr_out,
+                 "ASA_FUZZY Deviation: parallel_id: %d N_Generated: %d N_Accepted: %d\n",
+                 USER_OPTIONS->parallel_id, USER_OPTIONS->N_Generated,
+                 USER_OPTIONS->N_Accepted);
+#endif /* INT_LONG */
+#else /* ASA_PARALLEL */
+#if INT_LONG
+        fprintf (ptr_out,
+                 "ASA_FUZZY Deviation: N_Generated: %ld N_Accepted: %ld\n",
+                 USER_OPTIONS->N_Generated, USER_OPTIONS->N_Accepted);
+#else
+        fprintf (ptr_out,
+                 "ASA_FUZZY Deviation: N_Generated: %d N_Accepted: %d\n",
+                 USER_OPTIONS->N_Generated, USER_OPTIONS->N_Accepted);
+#endif /* INT_LONG */
+#endif /* ASA_PARALLEL */
+        fflush (ptr_out);
+#endif /* ASA_FUZZY_PRINT */
+
       }
     }
   }
@@ -5494,6 +5913,38 @@ FuzzyControl (USER_DEFINES * USER_OPTIONS, double *x, double fvalue,
   }
 
   if (ActualPerformance > USER_OPTIONS->Performance_Target) {
+    USER_OPTIONS->User_Quench_Cost_Scale[0] =
+      ASA_FUZZY_Init_User_Quench_Cost_Scale[0];
+    for (i = 0; i < NoParam; i++)
+      USER_OPTIONS->User_Quench_Param_Scale[i] =
+        ASA_FUZZY_Init_User_Quench_Param_Scale[i];
+
+#if ASA_FUZZY_PRINT
+    /* give approximate asa_out location when ASA_FUZZY operates */
+#if ASA_PARALLEL
+#if INT_LONG
+    fprintf (ptr_out,
+             "ASA_FUZZY reset: parallel_id: %d N_Generated: %ld N_Accepted: %ld\n",
+             USER_OPTIONS->parallel_id, USER_OPTIONS->N_Generated,
+             USER_OPTIONS->N_Accepted);
+#else
+    fprintf (ptr_out,
+             "ASA_FUZZY reset: parallel_id: %d N_Generated: %d N_Accepted: %d\n",
+             USER_OPTIONS->parallel_id, USER_OPTIONS->N_Generated,
+             USER_OPTIONS->N_Accepted);
+#endif /* INT_LONG */
+#else /* ASA_PARALLEL */
+#if INT_LONG
+    fprintf (ptr_out, "ASA_FUZZY reset: N_Generated: %ld N_Accepted: %ld\n",
+             USER_OPTIONS->N_Generated, USER_OPTIONS->N_Accepted);
+#else
+    fprintf (ptr_out, "ASA_FUZZY reset: N_Generated: %d N_Accepted: %d\n",
+             USER_OPTIONS->N_Generated, USER_OPTIONS->N_Accepted);
+#endif /* INT_LONG */
+#endif /* ASA_PARALLEL */
+    fflush (ptr_out);
+#endif /* ASA_FUZZY_PRINT */
+
     return;
   }
 
