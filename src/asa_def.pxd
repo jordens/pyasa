@@ -99,14 +99,14 @@ cdef extern from "asa.h":
          int *valid_state_generated_flag, int *exit_status,
          USER_DEFINES * OPTIONS)
     
-    cdef enum ASE_EXIT_CODES:
-        NORMAL_EXIT = 0
-        P_TEMP_TOO_SMALL = 1
-        C_TEMP_TOO_SMALL = 2
-        COST_REPEATING = 3
-        TOO_MANY_INVALID_STATES = 4
-        IMMEDIATE_EXIT = 5
-        INVALID_USER_INPUT = 7
-        INVALID_COST_FUNCTION = 8
-        INVALID_COST_FUNCTION_DERIV = 9
-        CALLOC_FAILED = -1
+cdef enum ASE_EXIT_CODES:
+    NORMAL_EXIT = 0
+    P_TEMP_TOO_SMALL = 1
+    C_TEMP_TOO_SMALL = 2
+    COST_REPEATING = 3
+    TOO_MANY_INVALID_STATES = 4
+    IMMEDIATE_EXIT = 5
+    INVALID_USER_INPUT = 7
+    INVALID_COST_FUNCTION = 8
+    INVALID_COST_FUNCTION_DERIV = 9
+    CALLOC_FAILED = -1
