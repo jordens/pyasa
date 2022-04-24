@@ -32,6 +32,8 @@ setup(
                          ("OPTIONAL_DATA_PTR", "1"),
                          ("USER_TYPE", "void *"),
                          ("USER_ASA_OUT", "1"),
+                         ("NO_PARAM_TEMP_TEST", "1"),
+                         ("NO_COST_TEMP_TEST", "1"),
                          #("ASA_PRINT_MORE", "1"),
                          #("ASA_PRINT", "0"),
                          ],
